@@ -4,6 +4,8 @@
 
 #include <iostream>
 #include <sstream>
+#include <readline/readline.h>
+#include <readline/history.h>
 
 
 std::string handle_create_table(const std::string& query) {
@@ -61,19 +63,42 @@ std::string parse_and_execute(const std::string& query) {
     return "ERROR: Unknown or unsupported command.";
 }
 
-
 int main() {
-    std::string input_line;
+    std::cout << "Welcome to simple-db! (Uses readline for history. Use Up/Down arrows)" << std::endl;
+    std::cout << "Enter .exit or quit to exit." << std::endl;
 
-    std::cout << "Welcome to simple-db!" << std::endl;
+    // Configure readline behavior if desired (optional)
+    // rl_bind_key('\t', rl_complete); // Example: enable basic tab completion later
 
+    // The Read-Eval-Print Loop (REPL)
     while (true) {
-        std::cout << "mydb> "; // Print prompt
-        if (!std::getline(std::cin, input_line)) {
-            // Handle potential end-of-file (e.g., Ctrl+D) or input error
+        // Use readline to read input. It handles the prompt, line editing, and history.
+        // It returns a C-style string (char*) that we need to manage.
+        char* line_read_c = readline("mydb> ");
+
+        // Check for EOF (Ctrl+D) or error
+        if (!line_read_c) {
             std::cout << "\nExiting." << std::endl;
             break;
         }
+
+        // Convert the C-style string to std::string for easier handling in C++.
+        // readline allocates memory, so we make a copy.
+        std::string input_line(line_read_c);
+
+        // Add the line to history *if* it's not empty and not an exit command.
+        // Use the original C-string `line_read_c` with add_history.
+        if (!input_line.empty() && input_line != ".exit" && input_line != "quit") {
+            add_history(line_read_c);
+            // You might want to save/load history to a file here or on exit/startup
+            // using read_history() and write_history().
+        }
+
+        // IMPORTANT: Free the memory allocated by readline()
+        free(line_read_c);
+        line_read_c = nullptr; // Good practice to null dangling pointers
+
+        // --- Process the input line (copied into input_line) ---
 
         // Simple exit command check
         if (input_line == "exit" || input_line == "quit") {
@@ -81,15 +106,20 @@ int main() {
             break;
         }
 
-        // Ignore empty lines
+        // Ignore empty lines (already handled by history add check, but safe to keep)
         if (input_line.empty()) {
             continue;
         }
 
-        // Parse and execute the command
+        // Parse and "execute" the command
         std::string result = parse_and_execute(input_line);
+
+        // Print the result
         std::cout << result << std::endl;
     }
 
-    return 0;
+    // Optional: Save history before exiting
+    // write_history("simple_db_history.txt");
+
+    return 0; // Indicate successful program termination
 }
