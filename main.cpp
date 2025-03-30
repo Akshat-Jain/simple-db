@@ -76,7 +76,7 @@ int main() {
         }
 
         // Simple exit command check
-        if (input_line == ".exit" || input_line == "quit") {
+        if (input_line == "exit" || input_line == "quit") {
             std::cout << "Exiting." << std::endl;
             break;
         }
