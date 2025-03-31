@@ -42,7 +42,7 @@ std::string parse_and_execute(const std::string& query) {
 
     // Convert command to upper case for case-insensitive comparison
     for (char &c : command) {
-        c = std::toupper(c);
+        c = static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
     }
 
     // Very basic command routing
@@ -51,7 +51,9 @@ std::string parse_and_execute(const std::string& query) {
         // Check for "TABLE" next (a slightly better check)
         std::string maybe_table;
         ss >> maybe_table;
-         for (char &c : maybe_table) c = std::toupper(c);
+         for (char &c : maybe_table) {
+             c = static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
+         }
          if (maybe_table == "TABLE") {
              return handle_create_table(query);
          }
@@ -59,7 +61,9 @@ std::string parse_and_execute(const std::string& query) {
         // Check for "INTO" next
         std::string maybe_into;
         ss >> maybe_into;
-        for (char &c : maybe_into) c = std::toupper(c);
+        for (char &c : maybe_into) {
+            c = static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
+        }
         if (maybe_into == "INTO") {
             return handle_insert(query);
         }
