@@ -28,8 +28,16 @@ std::string handle_select(const std::string& query) {
 
 std::string parse_and_execute(const std::string& query) {
     std::string command;
-    // Use stringstream to easily extract the first word (the command)
+
+    // Create an std::stringstream object named 'ss'.
+    // Initialize it with the content of the input 'query' string.
+    // This allows treating the 'query' string like an input stream (e.g., std::cin).
     std::stringstream ss(query);
+
+    // Use the stream extraction operator (>>) to read from the stringstream 'ss'.
+    // By default, >> skips leading whitespace and reads characters until the *next* whitespace.
+    // The extracted word ("CREATE", "INSERT", "SELECT", etc.) is stored in 'command'.
+    // The stream's internal position moves past the extracted word and the subsequent whitespace.
     ss >> command;
 
     // Convert command to upper case for case-insensitive comparison
