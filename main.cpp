@@ -76,8 +76,8 @@ std::string parse_and_execute(const std::string& query) {
 }
 
 int main() {
-    std::cout << "Welcome to simple-db! (Uses readline for history. Use Up/Down arrows)" << std::endl;
-    std::cout << "Enter .exit or quit to exit." << std::endl;
+    std::cout << "Welcome to simple-db!" << std::endl;
+    std::cout << "Enter exit or quit to exit." << std::endl;
 
     // Configure readline behavior if desired (optional)
     // rl_bind_key('\t', rl_complete); // Example: enable basic tab completion later
@@ -100,7 +100,7 @@ int main() {
 
         // Add the line to history *if* it's not empty and not an exit command.
         // Use the original C-string `line_read_c` with add_history.
-        if (!input_line.empty() && input_line != ".exit" && input_line != "quit") {
+        if (!input_line.empty() && input_line != "exit" && input_line != "quit") {
             add_history(line_read_c);
             // You might want to save/load history to a file here or on exit/startup
             // using read_history() and write_history().
