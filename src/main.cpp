@@ -7,6 +7,8 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 
+#include "simpledb/config.h"
+
 
 std::string handle_create_table(const std::string& query) {
     std::cout << "DEBUG: Placeholder handle_create_table called for: " << query << std::endl;
@@ -76,6 +78,7 @@ std::string parse_and_execute(const std::string& query) {
 }
 
 int main() {
+    config::init_config();
     std::cout << "Welcome to simple-db!" << std::endl;
     std::cout << "Enter exit or quit to exit." << std::endl;
 

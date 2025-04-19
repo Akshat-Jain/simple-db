@@ -37,3 +37,6 @@
 # Build directories
 cmake-build-*
 build
+
+# Default data directories
+data

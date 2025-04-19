@@ -23,7 +23,7 @@ pkg_check_modules(READLINE REQUIRED readline)
 # List all your source files (.cpp) here.
 add_executable(simple-db
         src/main.cpp
-#        src/config.cpp
+        src/config.cpp
 )
 
 # --- Link the executable against Readline using pkg-config variables ---
