@@ -7,6 +7,7 @@
 
 #include <iostream>
 #include <filesystem>
+#include <cstring>
 
 namespace config {
     static Config config;
