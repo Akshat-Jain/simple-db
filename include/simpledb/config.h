@@ -5,7 +5,7 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 #include <ostream>
-#include <__filesystem/filesystem_error.h>
+#include <filesystem>
 
 namespace config {
 
