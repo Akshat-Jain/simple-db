@@ -12,15 +12,15 @@ namespace config {
     static Config config;
     static bool initialized = false;
 
-    const static std::string ENV_DATA_DIR = "SIMPLE_DB_DATA_DIR";
-    const static std::string DEFAULT_DATA_DIR = "data";
+    const static char* ENV_DATA_DIR = "SIMPLE_DB_DATA_DIR";
+    const static char* DEFAULT_DATA_DIR = "data";
 
     void init_config() {
         if (initialized) {
             return;
         }
 
-        const char* env_data_dir = std::getenv("SIMPLE_DB_DATA_DIR");
+        const char* env_data_dir = std::getenv(ENV_DATA_DIR);
         if (env_data_dir != nullptr && std::strlen(env_data_dir) > 0) {
             config.data_dir = env_data_dir;
         } else {
