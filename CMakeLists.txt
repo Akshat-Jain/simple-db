@@ -22,14 +22,20 @@ pkg_check_modules(READLINE REQUIRED readline)
 # Define the executable target.
 # List all your source files (.cpp) here.
 add_executable(simple-db
-        main.cpp
-        # Add other .cpp files here as you create them, e.g.:
-        # table.cpp
-        # database.cpp
-        # parser_utils.cpp
+        src/main.cpp
+#        src/config.cpp
 )
 
 # --- Link the executable against Readline using pkg-config variables ---
+
+# This tells CMake to add the 'include' directory to the search path
+# for headers when compiling the 'simple-db' target.
+# This allows `#include "simpledb/config.h"` to work.
+# Use PRIVATE since only this target needs it directly for compilation.
+# ${CMAKE_CURRENT_SOURCE_DIR} is the directory containing this CMakeLists.txt
+target_include_directories(simple-db PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
 
 # Add the include directories provided by pkg-config to the target's include paths.
 # This allows your code to find <readline/readline.h> etc.
