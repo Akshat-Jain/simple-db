@@ -8,16 +8,19 @@
 #include <readline/history.h>
 
 #include "simpledb/config.h"
+#include "simpledb/parser.h"
 
 
 std::string handle_create_table(const std::string& query) {
     std::cout << "DEBUG: Placeholder handle_create_table called for: " << query << std::endl;
-    // TODO: Parse table name, columns, types
+    std::optional<command::CreateTableCommand> table_command = parser::parse_create_table(query);
+    std::cout << "Table name is " << table_command->table_name << std::endl;
     return "OK (Placeholder - Table creation)";
 }
 
 std::string handle_insert(const std::string& query) {
     std::cout << "DEBUG: Placeholder handle_insert called for: " << query << std::endl;
+    std::optional<command::InsertCommand> insert_command = parser::parse_insert(query);
     // TODO: Parse table name, values
     return "OK (Placeholder - Insertion)";
 }
