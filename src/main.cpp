@@ -9,15 +9,16 @@
 
 #include "simpledb/config.h"
 #include "simpledb/parser.h"
+#include "simpledb/utils/logging.h"
 
 
 std::string handle_create_table(const std::string& query) {
-    std::cout << "DEBUG: Placeholder handle_create_table called for: " << query << std::endl;
     std::optional<command::CreateTableCommand> table_command = parser::parse_create_table(query);
     if (!table_command) {
         return "ERROR: Failed to parse CREATE TABLE command.";
     }
-    std::cout << "Table name is " << table_command->table_name << std::endl;
+    DEBUG_LOG("Parsed CREATE TABLE command successfully: " << query);
+    DEBUG_LOG("Table name is " << table_command->table_name);
     return "OK (Placeholder - Table creation)";
 }
 

@@ -26,6 +26,7 @@ add_executable(simple-db
         src/config.cpp
         src/parser.cpp
         src/utils/stringutils.cpp
+        include/simpledb/utils/logging.h
 )
 
 # --- Link the executable against Readline using pkg-config variables ---
@@ -46,3 +47,7 @@ target_include_directories(simple-db PRIVATE ${READLINE_INCLUDE_DIRS})
 # Link the target against the libraries specified by pkg-config.
 # This handles the -L and -l flags needed by the linker.
 target_link_libraries(simple-db PRIVATE ${READLINE_LIBRARIES})
+
+target_compile_definitions(simple-db PRIVATE
+        "$<$<CONFIG:Debug>:DEBUG_MODE>"
+)

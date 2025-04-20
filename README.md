@@ -11,6 +11,9 @@ cd ~/github-personal/
 # 2. Configure (generate build files in ./build directory)
 cmake -S . -B build
 
+# To run in debug mode, use: cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
+# To run in release mode, use: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+
 # 3. Build (compile the code using info in ./build directory)
 cmake --build build
 

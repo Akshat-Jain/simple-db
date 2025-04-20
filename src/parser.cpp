@@ -7,13 +7,14 @@
 #include <iostream>
 #include <sstream>
 
+#include "simpledb/utils/logging.h"
 #include "simpledb/utils/stringutils.h"
 
 namespace parser {
     std::optional<command::CreateTableCommand> parse_create_table(const std::string &query) {
-        std::cout << "Query is: " << query << std::endl;
+        DEBUG_LOG("Query is: " << query);
         std::string trimmed_query = stringutils::trim(query);
-        std::cout << "Query after trimming is: " << trimmed_query << std::endl;
+        DEBUG_LOG("Query after trimming is: " << trimmed_query);
 
         command::CreateTableCommand command;
 
@@ -34,7 +35,6 @@ namespace parser {
 
         // 3. Extract the table name
         size_t after_table_stream_pos = ss.tellg();
-        std::cout << "Stream position after TABLE: " << after_table_stream_pos << std::endl;
 
         // Find the start of table name by finding first non-whitespace character after after_table_stream_pos
         size_t find_start_of_table_name = trimmed_query.find_first_not_of(" \t\n\r\f\v", after_table_stream_pos);
@@ -53,7 +53,6 @@ namespace parser {
 
         // if found, set table_name to the string between find_start_of_table_name and open_paren_pos
         command.table_name = stringutils::trim(trimmed_query.substr(find_start_of_table_name, open_paren_pos - find_start_of_table_name));
-        std::cout << "Table name is: " << command.table_name << std::endl;
         // Check if table_name is empty
         if (command.table_name.empty()) {
             std::cerr << "ERROR: Table name is empty." << std::endl;
@@ -68,7 +67,6 @@ namespace parser {
 
         // 4. Extract the columns and types
         size_t after_table_name_stream_pos = ss.tellg();
-        std::cout << "Stream position after table name: " << after_table_name_stream_pos << std::endl;
 
         size_t close_paren_pos = trimmed_query.find(')', open_paren_pos + 1);
         if (close_paren_pos == std::string::npos) {
@@ -77,7 +75,7 @@ namespace parser {
         }
 
         std::string column_definition_string = stringutils::trim(trimmed_query.substr(open_paren_pos + 1, close_paren_pos - open_paren_pos - 1));
-        std::cout << "DEBUG: Column definition part: [" << column_definition_string << "]" << std::endl;
+        DEBUG_LOG("Column definition part: [" << column_definition_string << "]");
 
         if (!column_definition_string.empty()) {
             std::stringstream column_definitions_stream(column_definition_string);
@@ -86,7 +84,7 @@ namespace parser {
             while (std::getline(column_definitions_stream, column_definition, ',')) {
                 // Split by comma and trim each part
                 column_definition = stringutils::trim(column_definition);
-                std::cout << "Column definition: [" << column_definition << "]" << std::endl;
+                DEBUG_LOG("Column definition: [" << column_definition << "]");
 
                 std::stringstream column_definition_sstream(column_definition);
                 std::string col_name_str;
