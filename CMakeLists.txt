@@ -27,7 +27,7 @@ add_executable(simple-db
         include/simpledb/parser.h
         src/parser.cpp
         include/simpledb/command.h
-        include/simpledb/stringutils.h
+        include/simpledb/utils/stringutils.h
         src/stringutils.cpp
 )
 
