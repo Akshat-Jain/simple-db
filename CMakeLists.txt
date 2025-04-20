@@ -4,6 +4,24 @@ project(simple-db)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED YES)
 
+#-----------------------------------------------------------------------------
+# Enable Testing with CTest
+#-----------------------------------------------------------------------------
+enable_testing()
+include(FetchContent) # Include module for fetching dependencies
+
+#-----------------------------------------------------------------------------
+# GoogleTest Dependency
+#-----------------------------------------------------------------------------
+FetchContent_Declare(
+        googletest
+        # Specify the Git repository and a stable tag or commit hash
+        GIT_REPOSITORY https://github.com/google/googletest.git
+        GIT_TAG        v1.16.0 # Or choose the latest stable release tag
+)
+
+FetchContent_MakeAvailable(googletest)
+
 # --- Use PkgConfig to find Readline ---
 # Find the pkg-config utility itself. CMake needs this to run pkg-config.
 find_package(PkgConfig REQUIRED)
@@ -26,7 +44,7 @@ add_executable(simple-db
         src/config.cpp
         src/parser.cpp
         src/utils/stringutils.cpp
-        include/simpledb/utils/logging.h
+        include/simpledb/utils/logging.h # todo: can be removed?
 )
 
 # --- Link the executable against Readline using pkg-config variables ---
@@ -51,3 +69,44 @@ target_link_libraries(simple-db PRIVATE ${READLINE_LIBRARIES})
 target_compile_definitions(simple-db PRIVATE
         "$<$<CONFIG:Debug>:DEBUG_MODE>"
 )
+
+#-----------------------------------------------------------------------------
+# Unit Test Definition
+#-----------------------------------------------------------------------------
+# Define the test executable target
+add_executable(run_tests
+        tests/parser_test.cpp
+        # Add other tests/*.cpp files here
+
+        # Include source files needed by the tests that aren't part of a library yet
+        # This links their compiled object code into the test executable.
+        src/config.cpp
+        src/parser.cpp
+        src/utils/stringutils.cpp
+)
+
+# --- Configure 'run_tests' Target ---
+# Include project headers for the test code
+target_include_directories(run_tests PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
+# Link the test executable against GoogleTest libraries
+# GTest::gtest_main provides main() function and links GTest::gtest automatically
+target_link_libraries(run_tests PRIVATE
+        GTest::gtest_main
+)
+
+target_include_directories(run_tests PRIVATE ${READLINE_INCLUDE_DIRS})
+
+target_link_libraries(run_tests PRIVATE ${READLINE_LIBRARIES})
+
+# Add compile definitions needed for tests (e.g., DEBUG_MODE for logging in tested code)
+target_compile_definitions(run_tests PRIVATE
+        "$<$<CONFIG:Debug>:DEBUG_MODE>"
+)
+
+# Discover and add tests to CTest automatically
+include(GoogleTest)
+gtest_discover_tests(run_tests)
+# This finds all TEST(...) cases in run_tests and registers them with CTest
