@@ -14,6 +14,9 @@
 std::string handle_create_table(const std::string& query) {
     std::cout << "DEBUG: Placeholder handle_create_table called for: " << query << std::endl;
     std::optional<command::CreateTableCommand> table_command = parser::parse_create_table(query);
+    if (!table_command) {
+        return "ERROR: Failed to parse CREATE TABLE command.";
+    }
     std::cout << "Table name is " << table_command->table_name << std::endl;
     return "OK (Placeholder - Table creation)";
 }
