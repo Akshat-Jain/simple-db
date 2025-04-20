@@ -6,7 +6,6 @@
 #define STRINGUTILS_H
 
 #include <string>
-#include <vector> // Could add split functions here later
 
 namespace stringutils { // Group utility functions
 

@@ -4,6 +4,9 @@
 
 #include "simpledb/utils/stringutils.h"
 
+#include <algorithm>
+#include <cctype>
+
 namespace stringutils {
     std::string trim(const std::string &str) {
         // Find the first non-whitespace character
