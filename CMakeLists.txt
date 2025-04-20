@@ -44,7 +44,6 @@ add_executable(simple-db
         src/config.cpp
         src/parser.cpp
         src/utils/stringutils.cpp
-        include/simpledb/utils/logging.h # todo: can be removed?
 )
 
 # --- Link the executable against Readline using pkg-config variables ---
