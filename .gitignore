@@ -40,3 +40,6 @@ build
 
 # Default data directories
 data
+
+# Test directories
+Testing
