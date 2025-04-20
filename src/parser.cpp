@@ -7,7 +7,7 @@
 #include <iostream>
 #include <sstream>
 
-#include "../include/simpledb/utils/stringutils.h"
+#include "simpledb/utils/stringutils.h"
 
 namespace parser {
     std::optional<command::CreateTableCommand> parse_create_table(const std::string &query) {

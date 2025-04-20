@@ -2,7 +2,7 @@
 // Created by Akshat Jain on 20/04/25.
 //
 
-#include "../include/simpledb/utils/stringutils.h"
+#include "simpledb/utils/stringutils.h"
 
 namespace stringutils {
     std::string trim(const std::string &str) {

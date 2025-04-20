@@ -24,11 +24,8 @@ pkg_check_modules(READLINE REQUIRED readline)
 add_executable(simple-db
         src/main.cpp
         src/config.cpp
-        include/simpledb/parser.h
         src/parser.cpp
-        include/simpledb/command.h
-        include/simpledb/utils/stringutils.h
-        src/stringutils.cpp
+        src/utils/stringutils.cpp
 )
 
 # --- Link the executable against Readline using pkg-config variables ---
