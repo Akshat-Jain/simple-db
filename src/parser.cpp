@@ -12,9 +12,9 @@
 
 namespace parser {
     std::optional<command::CreateTableCommand> parse_create_table(const std::string &query) {
-        DEBUG_LOG("Query is: " << query);
+        logging::log.debug("Query is: {}", query);
         std::string trimmed_query = stringutils::trim(query);
-        DEBUG_LOG("Query after trimming is: " << trimmed_query);
+        logging::log.debug("Query after trimming is: {}", trimmed_query);
 
         command::CreateTableCommand command;
 
@@ -75,7 +75,7 @@ namespace parser {
         }
 
         std::string column_definition_string = stringutils::trim(trimmed_query.substr(open_paren_pos + 1, close_paren_pos - open_paren_pos - 1));
-        DEBUG_LOG("Column definition part: [" << column_definition_string << "]");
+        logging::log.debug("Column definition part: [{}]", column_definition_string);
 
         if (!column_definition_string.empty()) {
             std::stringstream column_definitions_stream(column_definition_string);
@@ -84,7 +84,7 @@ namespace parser {
             while (std::getline(column_definitions_stream, column_definition, ',')) {
                 // Split by comma and trim each part
                 column_definition = stringutils::trim(column_definition);
-                DEBUG_LOG("Column definition: [" << column_definition << "]");
+                logging::log.debug("Column definition: [{}]", column_definition);
 
                 std::stringstream column_definition_sstream(column_definition);
                 std::string col_name_str;

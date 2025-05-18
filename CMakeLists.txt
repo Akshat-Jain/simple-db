@@ -19,8 +19,17 @@ FetchContent_Declare(
         GIT_REPOSITORY https://github.com/google/googletest.git
         GIT_TAG        v1.16.0 # Or choose the latest stable release tag
 )
-
 FetchContent_MakeAvailable(googletest)
+
+#-----------------------------------------------------------------------------
+# spdlog Dependency
+#-----------------------------------------------------------------------------
+FetchContent_Declare(
+        spdlog
+        GIT_REPOSITORY https://github.com/gabime/spdlog.git
+        GIT_TAG        v1.13.0        # or whatever latest stable
+)
+FetchContent_MakeAvailable(spdlog)
 
 # --- Use PkgConfig to find Readline ---
 # Find the pkg-config utility itself. CMake needs this to run pkg-config.
@@ -63,10 +72,10 @@ target_include_directories(simple-db PRIVATE ${READLINE_INCLUDE_DIRS})
 
 # Link the target against the libraries specified by pkg-config.
 # This handles the -L and -l flags needed by the linker.
-target_link_libraries(simple-db PRIVATE ${READLINE_LIBRARIES})
-
-target_compile_definitions(simple-db PRIVATE
-        "$<$<CONFIG:Debug>:DEBUG_MODE>"
+target_link_libraries(
+        simple-db PRIVATE
+        ${READLINE_LIBRARIES}
+        spdlog::spdlog
 )
 
 #-----------------------------------------------------------------------------
@@ -85,24 +94,17 @@ add_executable(run_tests
 )
 
 # --- Configure 'run_tests' Target ---
-# Include project headers for the test code
-target_include_directories(run_tests PRIVATE
+target_include_directories(
+        run_tests PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${READLINE_INCLUDE_DIRS}
 )
 
-# Link the test executable against GoogleTest libraries
-# GTest::gtest_main provides main() function and links GTest::gtest automatically
-target_link_libraries(run_tests PRIVATE
+target_link_libraries(
+        run_tests PRIVATE
+        ${READLINE_LIBRARIES}
         GTest::gtest_main
-)
-
-target_include_directories(run_tests PRIVATE ${READLINE_INCLUDE_DIRS})
-
-target_link_libraries(run_tests PRIVATE ${READLINE_LIBRARIES})
-
-# Add compile definitions needed for tests (e.g., DEBUG_MODE for logging in tested code)
-target_compile_definitions(run_tests PRIVATE
-        "$<$<CONFIG:Debug>:DEBUG_MODE>"
+        spdlog::spdlog
 )
 
 # Discover and add tests to CTest automatically

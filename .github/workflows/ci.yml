@@ -8,12 +8,8 @@ on:
 
 jobs:
   build:
-    name: Build (${{ matrix.build_type }})
+    name: Build
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        build_type: [ Release, Debug ]
     steps:
       - uses: actions/checkout@v4
 
@@ -26,7 +22,7 @@ jobs:
       # Note: We probably don't need CMAKE_PREFIX_PATH or PKG_CONFIG_PATH here
       # because apt-get installs libs/headers/pc files in standard system locations.
       - name: Configure CMake
-        run: cmake . -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+        run: cmake . -B ${{github.workspace}}/build
 
       # Build the project
       - name: Build

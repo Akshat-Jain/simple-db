@@ -17,8 +17,8 @@ std::string handle_create_table(const std::string& query) {
     if (!table_command) {
         return "ERROR: Failed to parse CREATE TABLE command.";
     }
-    DEBUG_LOG("Parsed CREATE TABLE command successfully: " << query);
-    DEBUG_LOG("Table name is " << table_command->table_name);
+    logging::log.info("Parsed CREATE TABLE command successfully: {}", query);
+    logging::log.info("Table name is {}", table_command->table_name);
     return "OK (Placeholder - Table creation)";
 }
 

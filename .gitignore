@@ -43,3 +43,6 @@ data
 
 # Test directories
 Testing
+
+# Log file
+application.log

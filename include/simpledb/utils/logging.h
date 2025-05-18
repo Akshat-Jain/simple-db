@@ -5,23 +5,49 @@
 #ifndef LOGGING_H
 #define LOGGING_H
 
-#ifdef DEBUG_MODE // Check if the control flag is defined
-    // Only include iostream if logging is actually enabled to minimize dependencies
-    #include <iostream>
+#include <memory>
+#include <spdlog/spdlog.h>
+#include <spdlog/sinks/basic_file_sink.h>
 
-    // Define the debug log macro to print to std::cerr
-    #define DEBUG_LOG(message) \
-    do { \
-    std::cerr << "[DEBUG] (" << __FILE__ << ":" << __LINE__ << ") " \
-    << message << std::endl; \
-    } while (0)
-    /* The do-while(0) loop ensures the macro behaves like a single statement,
-       preventing potential issues with if/else without braces. */
+namespace logging {
 
-#else // If DEBUG_MODE is NOT defined
-    // Define the debug log macro as empty when disabled
-    #define DEBUG_LOG(message) do {} while (0)
+    // Singleton-style accessor for the logger
+    inline std::shared_ptr<spdlog::logger> getLogger() {
+        static std::shared_ptr<spdlog::logger> logger = []() {
+            auto logger = spdlog::basic_logger_mt("file_logger", "application.log");
+            logger->set_pattern("[%Y-%m-%d %H:%M:%S] [%^%l%$] %v");
+            logger->set_level(spdlog::level::debug);
+            logger->flush_on(spdlog::level::debug);
+            return logger;
+        }();
+        return logger;
+    }
 
-#endif // End of DEBUG_MODE conditional compilation
+    // Simple wrapper struct to make calls like log.info("...")
+    struct LoggerWrapper {
+        template <typename... Args>
+        void info(fmt::format_string<Args...> fmt, Args&&... args) const {
+            getLogger()->info(fmt, std::forward<Args>(args)...);
+        }
 
-#endif //LOGGING_H
+        template <typename... Args>
+        void warn(fmt::format_string<Args...> fmt, Args&&... args) const {
+            getLogger()->warn(fmt, std::forward<Args>(args)...);
+        }
+
+        template <typename... Args>
+        void error(fmt::format_string<Args...> fmt, Args&&... args) const {
+            getLogger()->error(fmt, std::forward<Args>(args)...);
+        }
+
+        template <typename... Args>
+        void debug(fmt::format_string<Args...> fmt, Args&&... args) const {
+            getLogger()->debug(fmt, std::forward<Args>(args)...);
+        }
+    };
+
+    inline const LoggerWrapper log;
+
+} // namespace logging
+
+#endif // LOGGING_H
