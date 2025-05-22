@@ -19,6 +19,8 @@ add_compile_options(${UNUSED_WARN_FLAGS}) # Add to all targets
 # Enable Testing with CTest
 #-----------------------------------------------------------------------------
 enable_testing()
+
+
 include(FetchContent) # Include module for fetching dependencies
 
 #-----------------------------------------------------------------------------
@@ -41,6 +43,12 @@ FetchContent_Declare(
         GIT_TAG        v1.13.0        # or whatever latest stable
 )
 FetchContent_MakeAvailable(spdlog)
+
+#-----------------------------------------------------------------------------
+# nlohmann/json Dependency
+#-----------------------------------------------------------------------------
+FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.12.0/json.tar.xz)
+FetchContent_MakeAvailable(json)
 
 # --- Use PkgConfig to find Readline ---
 # Find the pkg-config utility itself. CMake needs this to run pkg-config.
@@ -88,6 +96,7 @@ target_link_libraries(
         simple-db PRIVATE
         ${READLINE_LIBRARIES}
         spdlog::spdlog
+        nlohmann_json::nlohmann_json
 )
 
 #-----------------------------------------------------------------------------
@@ -117,6 +126,7 @@ target_link_libraries(
         ${READLINE_LIBRARIES}
         GTest::gtest_main
         spdlog::spdlog
+        nlohmann_json::nlohmann_json
 )
 
 # Discover and add tests to CTest automatically

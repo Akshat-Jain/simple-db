@@ -12,3 +12,6 @@ Implementation of CREATE TABLE command:
    3. etc, we will find out more gradually
 2. Files to add:
    1. TBD
+
+
+Catalog is database about the database.
