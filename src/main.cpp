@@ -116,18 +116,14 @@ int main() {
         std::string input_line(line_read_c);
 
         // Add the line to history *if* it's not empty and not an exit command.
-        // Use the original C-string `line_read_c` with add_history.
         if (!input_line.empty() && input_line != "exit" && input_line != "quit") {
             add_history(line_read_c);
-            // You might want to save/load history to a file here or on exit/startup
-            // using read_history() and write_history().
         }
 
         // IMPORTANT: Free the memory allocated by readline()
         free(line_read_c);
         line_read_c = nullptr; // Good practice to null dangling pointers
 
-        // --- Process the input line (copied into input_line) ---
         if (input_line == "exit" || input_line == "quit") {
             std::cout << "Exiting." << std::endl;
             break;
