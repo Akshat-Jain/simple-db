@@ -66,8 +66,6 @@ namespace parser {
         }
 
         // 4. Extract the columns and types
-        size_t after_table_name_stream_pos = ss.tellg();
-
         size_t close_paren_pos = trimmed_query.find(')', open_paren_pos + 1);
         if (close_paren_pos == std::string::npos) {
             std::cerr << "ERROR: Closing parenthesis ')' not found." << std::endl;

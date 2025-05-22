@@ -128,8 +128,6 @@ int main() {
         line_read_c = nullptr; // Good practice to null dangling pointers
 
         // --- Process the input line (copied into input_line) ---
-
-        // Simple exit command check
         if (input_line == "exit" || input_line == "quit") {
             std::cout << "Exiting." << std::endl;
             break;
@@ -140,15 +138,9 @@ int main() {
             continue;
         }
 
-        // Parse and "execute" the command
         std::string result = parse_and_execute(input_line);
-
-        // Print the result
         std::cout << result << std::endl;
     }
 
-    // Optional: Save history before exiting
-    // write_history("simple_db_history.txt");
-
-    return 0; // Indicate successful program termination
+    return 0;
 }
