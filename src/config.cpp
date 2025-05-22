@@ -37,6 +37,7 @@ namespace config {
         }
 
         // Set the history file path.
+        // This is done similar to ~/.sqlite_history, ~/.python_history, etc.
         config.history_file = std::filesystem::path(std::getenv("HOME")) / ".simpledb_history";
 
         logging::log.info("Using config {}", config);
