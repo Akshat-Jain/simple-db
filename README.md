@@ -9,7 +9,7 @@ If the following steps run into build issues because of pkg-config on MacOS, try
 cd ~/github-personal/
 
 # 2. Configure (generate build files in ./build directory)
-cmake -S . -B build
+cmake . -B build -DCMAKE_BUILD_TYPE=Release
 
 # 3. Build (compile the code using info in ./build directory)
 cmake --build build

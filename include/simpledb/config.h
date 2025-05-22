@@ -11,6 +11,7 @@ namespace config {
 
     struct Config {
         std::filesystem::path data_dir;
+        std::filesystem::path history_file;
 
         friend std::ostream & operator<<(std::ostream &os, const Config &obj);
     };

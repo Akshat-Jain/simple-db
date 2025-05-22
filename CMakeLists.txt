@@ -53,6 +53,7 @@ add_executable(simple-db
         src/config.cpp
         src/parser.cpp
         src/utils/stringutils.cpp
+        src/history.cpp
 )
 
 # --- Link the executable against Readline using pkg-config variables ---

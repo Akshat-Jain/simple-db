@@ -23,6 +23,7 @@ namespace config {
             return;
         }
 
+        // Set the data directory from the environment variable or default.
         const char* env_data_dir = std::getenv(ENV_DATA_DIR);
         if (env_data_dir != nullptr && std::strlen(env_data_dir) > 0) {
             config.data_dir = env_data_dir;
@@ -34,6 +35,9 @@ namespace config {
             std::filesystem::create_directory(config.data_dir);
             std::cout << "Created data directory: " << config.data_dir << std::endl;
         }
+
+        // Set the history file path.
+        config.history_file = std::filesystem::path(std::getenv("HOME")) / ".simpledb_history";
 
         logging::log.info("Using config {}", config);
 

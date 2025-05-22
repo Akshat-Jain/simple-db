@@ -7,6 +7,7 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 
+#include "../include/simpledb/history.h"
 #include "simpledb/config.h"
 #include "simpledb/parser.h"
 #include "simpledb/utils/logging.h"
@@ -86,6 +87,12 @@ std::string parse_and_execute(const std::string& query) {
 
 int main() {
     config::init_config();
+    history::init();
+    // Register history::save to be called on normal program exit
+    if (std::atexit(history::save) != 0) {
+        logging::log.error("Failed to register history::save with atexit. History may not be saved.");
+    }
+
     std::cout << "Welcome to simple-db!" << std::endl;
     std::cout << "Enter exit or quit to exit." << std::endl;
 
