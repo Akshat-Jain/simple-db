@@ -9,6 +9,8 @@
 #include <filesystem>
 #include <cstring>
 
+#include "simpledb/utils/logging.h"
+
 namespace config {
     static Config config;
     static bool initialized = false;
@@ -33,7 +35,7 @@ namespace config {
             std::cout << "Created data directory: " << config.data_dir << std::endl;
         }
 
-        std::cout << "Using config:\n" << config << std::endl;
+        logging::log.info("Using config {}", config);
 
         initialized = true;
     }
