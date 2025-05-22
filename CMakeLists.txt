@@ -5,6 +5,17 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED YES)
 
 #-----------------------------------------------------------------------------
+# Warning flags for GCC/Clang
+#-----------------------------------------------------------------------------
+set(UNUSED_WARN_FLAGS
+        -Wall               # enable the majority of “sane” warnings (overflow, uninitialized vars, etc.)
+        -Wextra             # turn on extra, more pedantic warnings beyond -Wall
+        -Wunused-variable   # warn whenever a local variable is declared but never used
+)
+
+add_compile_options(${UNUSED_WARN_FLAGS}) # Add to all targets
+
+#-----------------------------------------------------------------------------
 # Enable Testing with CTest
 #-----------------------------------------------------------------------------
 enable_testing()

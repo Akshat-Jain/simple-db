@@ -127,7 +127,7 @@ namespace parser {
         return command;
     }
 
-    std::optional<command::InsertCommand> parse_insert(const std::string &query) {
+    std::optional<command::InsertCommand> parse_insert([[maybe_unused]] const std::string &query) {
         std::cout << "Not yet implemented: parse_insert" << std::endl;
         return std::nullopt;
     }
