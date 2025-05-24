@@ -73,6 +73,7 @@ add_executable(simple-db
         src/parser.cpp
         src/utils/stringutils.cpp
         src/history.cpp
+        src/catalog.cpp
 )
 
 # --- Link the executable against Readline using pkg-config variables ---
@@ -105,6 +106,7 @@ target_link_libraries(
 # Define the test executable target
 add_executable(run_tests
         tests/parser_test.cpp
+        tests/catalog_test.cpp
         # Add other tests/*.cpp files here
 
         # Include source files needed by the tests that aren't part of a library yet
@@ -112,6 +114,7 @@ add_executable(run_tests
         src/config.cpp
         src/parser.cpp
         src/utils/stringutils.cpp
+        src/catalog.cpp
 )
 
 # --- Configure 'run_tests' Target ---

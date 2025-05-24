@@ -5,7 +5,6 @@
 #include "simpledb/history.h"
 
 #include <iostream>
-#include <string>
 #include <readline/history.h>
 #include "simpledb/config.h"
 #include "simpledb/utils/logging.h"

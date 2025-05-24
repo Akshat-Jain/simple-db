@@ -6,19 +6,25 @@
 #define COMMAND_H
 #include <string>
 #include <vector>
+#include "nlohmann/json.hpp"
 
 namespace command {
-
     enum class Datatype {
         INT,
         TEXT,
         UNKNOWN
     };
+    NLOHMANN_JSON_SERIALIZE_ENUM(Datatype, {
+        {Datatype::INT, "INT"},
+        {Datatype::TEXT, "TEXT"},
+        {Datatype::UNKNOWN, "UNKNOWN"}
+    })
 
     struct ColumnDefinition {
         std::string column_name;
         Datatype type = Datatype::UNKNOWN;
     };
+    NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ColumnDefinition, column_name, type)
 
     struct CreateTableCommand {
         std::string table_name;
