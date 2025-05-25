@@ -13,16 +13,62 @@
 
 namespace catalog {
 
-  struct TableSchema {
-    std::string table_name;
-    std::vector<command::ColumnDefinition> column_definitions;
-  };
-  NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(TableSchema, table_name, column_definitions)
+    struct TableSchema {
+        std::string table_name;
+        std::vector<command::ColumnDefinition> column_definitions;
+    };
+    NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(TableSchema, table_name, column_definitions)
 
-  using CatalogData = std::vector<TableSchema>;
+    /**
+       * @brief Initializes the catalog system.
+       * This must be called once at application startup before other catalog functions are used.
+       * It loads the catalog from disk (if it exists) or prepares an empty catalog.
+       * Handles critical errors if an existing catalog is corrupt by exiting.
+       * @param data_directory The base directory where the catalog file (e.g., "catalog.json") resides.
+       */
+    void initialize(const std::filesystem::path& data_directory);
 
-  std::optional<CatalogData> load_catalog(const std::filesystem::path& catalog_path);
+    /**
+     * @brief Checks if a table with the given name exists in the catalog.
+     */
+    bool table_exists(const std::string& table_name);
 
-  bool save_catalog(const std::filesystem::path& catalog_path, const CatalogData& data);
+    /**
+     * @brief Adds a new table schema to the catalog.
+     * This updates both the in-memory catalog and persists the change to disk.
+     * @return True if the table was successfully added and persisted, false otherwise (e.g., disk save failed).
+     */
+    bool add_table(const TableSchema& table_schema);
+
+    /**
+     * @brief Removes a table from the catalog.
+     */
+    bool remove_table(const std::string& table_name);
+
+    /**
+     * @brief Retrieves the schema for a given table name.
+     * @param table_name The name of the table.
+     * @return An optional containing the TableSchema (if found).
+     */
+    std::optional<TableSchema> get_table_schema(const std::string& table_name);
+
+    /**
+     * @brief Retrieves all table schemas currently in the catalog.
+     * Useful for listing tables or internal operations.
+     * @return A vector of TableSchema objects representing all tables in the catalog.
+     */
+    const std::vector<TableSchema>& get_all_schemas();
+
+    // --- Testing Hooks ---
+    // This section will only be compiled if ENABLE_CATALOG_TESTING_HOOKS is defined.
+    // You will define this macro when compiling your test executable (e.g., in CMakeLists.txt for the test target).
+    #ifdef ENABLE_CATALOG_TESTING_HOOKS
+    /**
+     * @brief Resets the internal static state of the catalog module.
+     * FOR TESTING PURPOSES ONLY. This allows tests to re-initialize the catalog
+     * as if the program just started.
+     */
+    void reset_internal_state_for_testing();
+    #endif // ENABLE_CATALOG_TESTING_HOOKS
 }
 #endif //CATALOG_H

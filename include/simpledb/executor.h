@@ -28,15 +28,11 @@ namespace executor {
      * It performs rollbacks if any step fails to maintain consistency.
      *
      * @param cmd The parsed CreateTableCommand object containing table details.
-     * @param catalog_data_ref A reference to the in-memory catalog data, which will be modified.
-     * @param catalog_file_path The path to the catalog file on disk (e.g., "data/catalog.json").
      * @param table_data_dir The directory where table data files will be stored (e.g., "data/").
      * @return ExecutionResult A string indicating success or failure.
      */
     ExecutionResult execute_create_table_command(
             const command::CreateTableCommand& cmd,
-            catalog::CatalogData& catalog_data,
-            const std::filesystem::path& catalog_file_path,
             const std::filesystem::path& table_data_dir
     );
 }

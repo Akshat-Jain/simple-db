@@ -3,13 +3,15 @@
 //
 
 #include "simpledb/executor.h"
+#include "simpledb/catalog.h"
 
 #include <gtest/gtest.h>
 #include <fstream>
 #include <filesystem>
 
+using json = nlohmann::json;
 
-void AssertCatalogDataEqual(const catalog::CatalogData& expected, const catalog::CatalogData& actual) {
+void AssertCatalogDataEqual(const std::vector<catalog::TableSchema>& expected, const std::vector<catalog::TableSchema>& actual) {
     ASSERT_EQ(expected.size(), actual.size());
     for (size_t i = 0; i < expected.size(); ++i) {
         ASSERT_EQ(expected[i].table_name, actual[i].table_name);
@@ -24,41 +26,55 @@ void AssertCatalogDataEqual(const catalog::CatalogData& expected, const catalog:
 
 class ExecutorCreateTableTest : public ::testing::Test {
 protected:
-    catalog::CatalogData test_in_memory_catalog; // This will be passed to the executor
-    std::filesystem::path test_base_data_dir;    // Base for all test files for this fixture
-    std::filesystem::path test_catalog_file_path;
+    std::filesystem::path test_data_dir;
+    std::filesystem::path expected_catalog_json_path;
 
     void SetUp() override {
         // Create a unique temporary directory for each test run using this fixture
         // to ensure isolation. Using the test name can help.
         const ::testing::TestInfo* const test_info =
                 ::testing::UnitTest::GetInstance()->current_test_info();
-        test_base_data_dir = std::filesystem::temp_directory_path() /
+        test_data_dir = std::filesystem::temp_directory_path() /
                              (std::string("simpledb_tests_") + test_info->test_suite_name() + "_" + test_info->name());
 
-        std::filesystem::create_directories(test_base_data_dir); // Create the directory itself
-
-        test_catalog_file_path = test_base_data_dir / "catalog.json";
-
-        // Clear the in-memory catalog for each test
-        test_in_memory_catalog.clear();
-
-        // Ensure catalog file doesn't exist from a previous run (optional, TearDown should handle)
-        if (std::filesystem::exists(test_catalog_file_path)) {
-            std::filesystem::remove(test_catalog_file_path);
+        if (std::filesystem::exists(test_data_dir)) {
+            std::filesystem::remove(test_data_dir);
         }
+        std::filesystem::create_directories(test_data_dir);
+        expected_catalog_json_path = test_data_dir / "catalog.json";
+
+        #ifdef ENABLE_CATALOG_TESTING_HOOKS
+        catalog::reset_internal_state_for_testing();
+        #else
+        #endif
+
+        catalog::initialize(test_data_dir);
     }
 
     void TearDown() override {
         // Remove the entire temporary directory and its contents
-        if (std::filesystem::exists(test_base_data_dir)) {
-            std::filesystem::remove_all(test_base_data_dir);
+        if (std::filesystem::exists(test_data_dir)) {
+            std::filesystem::remove_all(test_data_dir);
         }
     }
 
-    // Helper to load catalog from the test_catalog_file_path
-    std::optional<catalog::CatalogData> loadTestCatalogFromFile() {
-        return catalog::load_catalog(test_catalog_file_path);
+//    static std::optional<std::vector<catalog::TableSchema>> loadTestCatalogFromFile() {
+//        return catalog::get_all_schemas();
+//    }
+    std::optional<std::vector<catalog::TableSchema>> loadCatalogFromDisk() {
+        if (!std::filesystem::exists(expected_catalog_json_path)) {
+            return std::vector<catalog::TableSchema>{}; // Consistent with how initialize handles non-existent
+        }
+        std::ifstream ifs(expected_catalog_json_path);
+        if (!ifs.is_open()) return std::nullopt;
+        try {
+            json j;
+            ifs >> j;
+            if (ifs.fail() && !ifs.eof()) return std::nullopt; // Basic stream check
+            return j.get<std::vector<catalog::TableSchema>>();
+        } catch (const std::exception&) {
+            return std::nullopt;
+        }
     }
 };
 
@@ -68,27 +84,28 @@ TEST_F(ExecutorCreateTableTest, SuccessfulCreateTable) {
     cmd.column_definitions.push_back({"id", command::Datatype::INT});
     cmd.column_definitions.push_back({"name", command::Datatype::TEXT});;
 
-    std::string result = executor::execute_create_table_command(cmd, test_in_memory_catalog, test_catalog_file_path, test_base_data_dir);
+    std::string result = executor::execute_create_table_command(cmd, test_data_dir);
 
     // Check the result
     ASSERT_EQ(result, "OK (Table 'test_table' created successfully)");
 
     // Verify the in-memory catalog was updated
-    ASSERT_EQ(test_in_memory_catalog.size(), 1);
-    ASSERT_EQ(test_in_memory_catalog[0].table_name, "test_table");
-    ASSERT_EQ(test_in_memory_catalog[0].column_definitions.size(), 2);
-    ASSERT_EQ(test_in_memory_catalog[0].column_definitions[0].column_name, "id");
-    ASSERT_EQ(test_in_memory_catalog[0].column_definitions[0].type, command::Datatype::INT);
-    ASSERT_EQ(test_in_memory_catalog[0].column_definitions[1].column_name, "name");
-    ASSERT_EQ(test_in_memory_catalog[0].column_definitions[1].type, command::Datatype::TEXT);
+    const auto& in_memory_catalog_after_create = catalog::get_all_schemas();
+    ASSERT_EQ(in_memory_catalog_after_create.size(), 1);
+    ASSERT_EQ(in_memory_catalog_after_create[0].table_name, "test_table");
+    ASSERT_EQ(in_memory_catalog_after_create[0].column_definitions.size(), 2);
+    ASSERT_EQ(in_memory_catalog_after_create[0].column_definitions[0].column_name, "id");
+    ASSERT_EQ(in_memory_catalog_after_create[0].column_definitions[0].type, command::Datatype::INT);
+    ASSERT_EQ(in_memory_catalog_after_create[0].column_definitions[1].column_name, "name");
+    ASSERT_EQ(in_memory_catalog_after_create[0].column_definitions[1].type, command::Datatype::TEXT);
 
     // Verify the catalog file was created and contains the correct data
-    auto loaded_catalog = loadTestCatalogFromFile();
+    auto loaded_catalog = loadCatalogFromDisk();
     ASSERT_TRUE(loaded_catalog.has_value());
-    AssertCatalogDataEqual(test_in_memory_catalog, loaded_catalog.value());
+    AssertCatalogDataEqual(in_memory_catalog_after_create, loaded_catalog.value());
 
     // Verify the data file was created
-    std::filesystem::path data_file_path = test_base_data_dir / "test_table.data";
+    std::filesystem::path data_file_path = test_data_dir / "test_table.data";
     ASSERT_TRUE(std::filesystem::exists(data_file_path));
 }
 
@@ -99,7 +116,7 @@ TEST_F(ExecutorCreateTableTest, DuplicateTableName) {
     cmd1.column_definitions.push_back({"id", command::Datatype::INT});
     cmd1.column_definitions.push_back({"name", command::Datatype::TEXT});
 
-    std::string result1 = executor::execute_create_table_command(cmd1, test_in_memory_catalog, test_catalog_file_path, test_base_data_dir);
+    std::string result1 = executor::execute_create_table_command(cmd1, test_data_dir);
     ASSERT_EQ(result1, "OK (Table 'duplicate_table_name' created successfully)");
 
     // Now try to create a table with the same name
@@ -108,25 +125,25 @@ TEST_F(ExecutorCreateTableTest, DuplicateTableName) {
     cmd2.column_definitions.push_back({"id", command::Datatype::INT});
     cmd2.column_definitions.push_back({"description", command::Datatype::TEXT});
 
-    std::string result2 = executor::execute_create_table_command(cmd2, test_in_memory_catalog, test_catalog_file_path, test_base_data_dir);
+    std::string result2 = executor::execute_create_table_command(cmd2, test_data_dir);
 
     // Check the result
     ASSERT_EQ(result2, "ERROR: Table duplicate_table_name already exists.");
 
     // Verify the in-memory catalog was not updated
-    ASSERT_EQ(test_in_memory_catalog.size(), 1);
-
-    ASSERT_EQ(test_in_memory_catalog[0].table_name, "duplicate_table_name");
-    ASSERT_EQ(test_in_memory_catalog[0].column_definitions.size(), 2);
-    ASSERT_EQ(test_in_memory_catalog[0].column_definitions[0].column_name, "id");
-    ASSERT_EQ(test_in_memory_catalog[0].column_definitions[1].column_name, "name");
+    const auto& in_memory_catalog = catalog::get_all_schemas();
+    ASSERT_EQ(in_memory_catalog.size(), 1);
+    ASSERT_EQ(in_memory_catalog[0].table_name, "duplicate_table_name");
+    ASSERT_EQ(in_memory_catalog[0].column_definitions.size(), 2);
+    ASSERT_EQ(in_memory_catalog[0].column_definitions[0].column_name, "id");
+    ASSERT_EQ(in_memory_catalog[0].column_definitions[1].column_name, "name");
 
     // Verify the catalog file was created and contains the correct data
-    auto loaded_catalog = loadTestCatalogFromFile();
+    auto loaded_catalog = loadCatalogFromDisk();
     ASSERT_TRUE(loaded_catalog.has_value());
-    AssertCatalogDataEqual(test_in_memory_catalog, loaded_catalog.value());
+    AssertCatalogDataEqual(in_memory_catalog, loaded_catalog.value());
 
     // Verify the data file for the first table was created and still exists
-    std::filesystem::path data_file_path = test_base_data_dir / "duplicate_table_name.data";
+    std::filesystem::path data_file_path = test_data_dir / "duplicate_table_name.data";
     ASSERT_TRUE(std::filesystem::exists(data_file_path));
 }
