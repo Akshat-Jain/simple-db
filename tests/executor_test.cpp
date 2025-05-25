@@ -62,7 +62,7 @@ protected:
     }
 };
 
-TEST_F(ExecutorCreateTableTest, SuccessfulCreation) {
+TEST_F(ExecutorCreateTableTest, SuccessfulCreateTable) {
     command::CreateTableCommand cmd;
     cmd.table_name = "test_table";
     cmd.column_definitions.push_back({"id", command::Datatype::INT});
@@ -89,5 +89,44 @@ TEST_F(ExecutorCreateTableTest, SuccessfulCreation) {
 
     // Verify the data file was created
     std::filesystem::path data_file_path = test_base_data_dir / "test_table.data";
+    ASSERT_TRUE(std::filesystem::exists(data_file_path));
+}
+
+TEST_F(ExecutorCreateTableTest, DuplicateTableName) {
+    // Create the first table
+    command::CreateTableCommand cmd1;
+    cmd1.table_name = "duplicate_table_name";
+    cmd1.column_definitions.push_back({"id", command::Datatype::INT});
+    cmd1.column_definitions.push_back({"name", command::Datatype::TEXT});
+
+    std::string result1 = executor::execute_create_table_command(cmd1, test_in_memory_catalog, test_catalog_file_path, test_base_data_dir);
+    ASSERT_EQ(result1, "OK (Table 'duplicate_table_name' created successfully)");
+
+    // Now try to create a table with the same name
+    command::CreateTableCommand cmd2;
+    cmd2.table_name = "duplicate_table_name"; // Same name as before
+    cmd2.column_definitions.push_back({"id", command::Datatype::INT});
+    cmd2.column_definitions.push_back({"description", command::Datatype::TEXT});
+
+    std::string result2 = executor::execute_create_table_command(cmd2, test_in_memory_catalog, test_catalog_file_path, test_base_data_dir);
+
+    // Check the result
+    ASSERT_EQ(result2, "ERROR: Table duplicate_table_name already exists.");
+
+    // Verify the in-memory catalog was not updated
+    ASSERT_EQ(test_in_memory_catalog.size(), 1);
+
+    ASSERT_EQ(test_in_memory_catalog[0].table_name, "duplicate_table_name");
+    ASSERT_EQ(test_in_memory_catalog[0].column_definitions.size(), 2);
+    ASSERT_EQ(test_in_memory_catalog[0].column_definitions[0].column_name, "id");
+    ASSERT_EQ(test_in_memory_catalog[0].column_definitions[1].column_name, "name");
+
+    // Verify the catalog file was created and contains the correct data
+    auto loaded_catalog = loadTestCatalogFromFile();
+    ASSERT_TRUE(loaded_catalog.has_value());
+    AssertCatalogDataEqual(test_in_memory_catalog, loaded_catalog.value());
+
+    // Verify the data file for the first table was created and still exists
+    std::filesystem::path data_file_path = test_base_data_dir / "duplicate_table_name.data";
     ASSERT_TRUE(std::filesystem::exists(data_file_path));
 }
