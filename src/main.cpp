@@ -7,11 +7,13 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 
-#include "../include/simpledb/history.h"
+#include "simpledb/history.h"
 #include "simpledb/config.h"
 #include "simpledb/parser.h"
 #include "simpledb/utils/logging.h"
+#include "simpledb/catalog.h"
 
+static catalog::CatalogData catalog_data;
 
 std::string handle_create_table(const std::string& query) {
     std::optional<command::CreateTableCommand> table_command = parser::parse_create_table(query);
@@ -85,8 +87,22 @@ std::string parse_and_execute(const std::string& query) {
     return "ERROR: Unknown or unsupported command.";
 }
 
+void initialize_catalog() {
+    std::filesystem::path catalog_path = config::get_config().data_dir / "catalog.json";
+    std::optional<catalog::CatalogData> catalog_optional = catalog::load_catalog(catalog_path);
+    if (catalog_optional.has_value()) {
+        catalog_data = catalog_optional.value();
+        logging::log.info("Catalog loaded successfully with {} tables.", catalog_data.size());
+    } else {
+        logging::log.critical("FATAL ERROR: Could not load or parse existing catalog file: {}.", catalog_path.string());
+        std::cerr << "FATAL ERROR: Database catalog file is corrupt or unreadable: " << catalog_path << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+}
+
 int main() {
     config::init_config();
+    initialize_catalog();
     history::init();
     // Register history::save to be called on normal program exit
     if (std::atexit(history::save) != 0) {
