@@ -26,6 +26,30 @@ TEST(Parser, GetCommandTypeHandlesWhitespace) {
     ASSERT_EQ(parser::get_command_type("\tDROP\tTABLE\tt"), parser::CommandType::DROP_TABLE);
 }
 
+TEST(Parser, GetCommandTypeHandlesPartialOrIncorrectKeywords) {
+    // First keyword is known, but second (if expected) is missing or wrong
+    ASSERT_EQ(parser::get_command_type("CREATE mytable (id INT)"), parser::CommandType::UNKNOWN);
+    ASSERT_EQ(parser::get_command_type("CREATE"), parser::CommandType::UNKNOWN); // CREATE alone
+
+    ASSERT_EQ(parser::get_command_type("INSERT mytable VALUES (1)"), parser::CommandType::UNKNOWN);
+    ASSERT_EQ(parser::get_command_type("INSERT"), parser::CommandType::UNKNOWN); // INSERT alone
+
+    ASSERT_EQ(parser::get_command_type("DROP mytable"), parser::CommandType::UNKNOWN);
+    ASSERT_EQ(parser::get_command_type("DROP"), parser::CommandType::UNKNOWN); // DROP alone
+
+    // SELECT doesn't have a mandatory second keyword for get_command_type, so "SELECT" alone is fine.
+}
+
+TEST(Parser, GetCommandTypeHandlesCompletelyUnknownAndEmpty) {
+    ASSERT_EQ(parser::get_command_type("ALTER TABLE my_table ADD COLUMN new_col INT"), parser::CommandType::UNKNOWN);
+    ASSERT_EQ(parser::get_command_type("UPDATE my_table SET col1 = 1"), parser::CommandType::UNKNOWN);
+    ASSERT_EQ(parser::get_command_type("DELETE FROM my_table"), parser::CommandType::UNKNOWN);
+    ASSERT_EQ(parser::get_command_type("EXPLAIN SELECT * FROM my_table"), parser::CommandType::UNKNOWN);
+    ASSERT_EQ(parser::get_command_type(""), parser::CommandType::UNKNOWN);
+    ASSERT_EQ(parser::get_command_type("    "), parser::CommandType::UNKNOWN);
+    ASSERT_EQ(parser::get_command_type("\t\n"), parser::CommandType::UNKNOWN);
+}
+
 TEST(CreateTable, BasicCreateTable) {
     std::string query = "CREATE TABLE my_table (id INT, name TEXT)";
     std::optional<command::CreateTableCommand> table_command = parser::parse_create_table(query);
