@@ -43,11 +43,6 @@ protected:
         std::filesystem::create_directories(test_data_dir);
         expected_catalog_json_path = test_data_dir / "catalog.json";
 
-        #ifdef ENABLE_CATALOG_TESTING_HOOKS
-        catalog::reset_internal_state_for_testing();
-        #else
-        #endif
-
         catalog::initialize(test_data_dir);
     }
 

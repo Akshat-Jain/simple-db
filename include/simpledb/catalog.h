@@ -58,17 +58,5 @@ namespace catalog {
      * @return A vector of TableSchema objects representing all tables in the catalog.
      */
     const std::vector<TableSchema>& get_all_schemas();
-
-    // --- Testing Hooks ---
-    // This section will only be compiled if ENABLE_CATALOG_TESTING_HOOKS is defined.
-    // You will define this macro when compiling your test executable (e.g., in CMakeLists.txt for the test target).
-    #ifdef ENABLE_CATALOG_TESTING_HOOKS
-    /**
-     * @brief Resets the internal static state of the catalog module.
-     * FOR TESTING PURPOSES ONLY. This allows tests to re-initialize the catalog
-     * as if the program just started.
-     */
-    void reset_internal_state_for_testing();
-    #endif // ENABLE_CATALOG_TESTING_HOOKS
 }
 #endif //CATALOG_H

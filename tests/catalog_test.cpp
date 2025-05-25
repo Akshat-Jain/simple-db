@@ -20,7 +20,7 @@ protected:
     std::filesystem::path expected_catalog_json_path; // Path to where catalog.json *should* be for this test
 
     void SetUp() override {
-        // 1. Create a unique temporary directory for this specific test case
+        // Create a unique temporary directory for this specific test case
         const ::testing::TestInfo* const test_info =
                 ::testing::UnitTest::GetInstance()->current_test_info();
         test_data_dir = std::filesystem::temp_directory_path() /
@@ -31,18 +31,6 @@ protected:
         }
         std::filesystem::create_directories(test_data_dir);
         expected_catalog_json_path = test_data_dir / "catalog.json";
-
-        // 2. Reset the catalog module's internal static state
-        #ifdef ENABLE_CATALOG_TESTING_HOOKS
-        catalog::reset_internal_state_for_testing();
-        #else
-        // If the hook isn't available, tests for initialize might behave unexpectedly
-        // after the first one, as the catalog module won't re-read its path.
-        logging::log.warn("ENABLE_CATALOG_TESTING_HOOKS not defined. Catalog tests may not be fully isolated.");
-        #endif
-
-        // 3. Initialize the catalog module to use this test's specific data directory.
-        catalog::initialize(test_data_dir);
     }
 
     void TearDown() override {
@@ -183,6 +171,7 @@ TEST_F(CatalogTest, AddMultipleTablesAndVerifyPersistence) {
         std::filesystem::remove(catalog_path);
     }
 
+    catalog::initialize(test_data_dir);
     ASSERT_TRUE(catalog::add_table(table1));
     ASSERT_TRUE(catalog::add_table(table2));
 
@@ -205,6 +194,7 @@ TEST_F(CatalogTest, AddMultipleTablesAndVerifyPersistence) {
 }
 
 TEST_F(CatalogTest, InitializeWithNonExistentFileResultsInEmptyCatalog) {
+    catalog::initialize(test_data_dir);
     const auto& schemas_in_memory = catalog::get_all_schemas();
     ASSERT_EQ(0, schemas_in_memory.size());
     ASSERT_FALSE(std::filesystem::exists(expected_catalog_json_path));
@@ -212,13 +202,6 @@ TEST_F(CatalogTest, InitializeWithNonExistentFileResultsInEmptyCatalog) {
 
 
 TEST_F(CatalogTest, InitializeWithEmptyFileCausesExit) {
-    #ifdef ENABLE_CATALOG_TESTING_HOOKS
-        catalog::reset_internal_state_for_testing();
-    #else
-        GTEST_SKIP() << "This test requires ENABLE_CATALOG_TESTING_HOOKS for proper isolation.";
-        return;
-    #endif
-
     std::ofstream out(expected_catalog_json_path);
     if (!out.is_open()) { ADD_FAILURE() << "Setup: Failed to create empty file."; return; }
     out.close();
@@ -230,13 +213,6 @@ TEST_F(CatalogTest, InitializeWithEmptyFileCausesExit) {
 }
 
 TEST_F(CatalogTest, InitializeWithMalformedJsonFileCausesExit) {
-    #ifdef ENABLE_CATALOG_TESTING_HOOKS
-        catalog::reset_internal_state_for_testing();
-    #else
-        GTEST_SKIP() << "This test requires ENABLE_CATALOG_TESTING_HOOKS for proper isolation.";
-        return;
-    #endif
-
     std::ofstream out(expected_catalog_json_path);
     if (!out.is_open()) {
         ADD_FAILURE() << "Test setup: Failed to create malformed JSON file at " << expected_catalog_json_path;
@@ -258,13 +234,6 @@ TEST_F(CatalogTest, InitializeWithMalformedJsonFileCausesExit) {
 }
 
 TEST_F(CatalogTest, InitializeWithIncorrectJsonStructureCausesExit) {
-    #ifdef ENABLE_CATALOG_TESTING_HOOKS
-        catalog::reset_internal_state_for_testing();
-    #else
-        GTEST_SKIP() << "This test requires ENABLE_CATALOG_TESTING_HOOKS for proper isolation.";
-        return;
-    #endif
-
     json incorrect_structure_json = {
             {"some_object_key", "some_value"},
             {"another_key", 123}
@@ -291,13 +260,6 @@ TEST_F(CatalogTest, InitializeWithIncorrectJsonStructureCausesExit) {
 }
 
 TEST_F(CatalogTest, InitializeWithValidEmptyArrayFileResultsInEmptyCatalog) {
-    #ifdef ENABLE_CATALOG_TESTING_HOOKS
-        catalog::reset_internal_state_for_testing();
-    #else
-        GTEST_SKIP() << "This test requires ENABLE_CATALOG_TESTING_HOOKS for proper isolation.";
-        return;
-    #endif
-
     json empty_array_json = nlohmann::json::array(); // Creates "[]"
 
     std::ofstream out(expected_catalog_json_path);

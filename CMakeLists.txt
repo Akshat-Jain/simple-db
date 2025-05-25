@@ -135,8 +135,6 @@ target_link_libraries(
         nlohmann_json::nlohmann_json
 )
 
-target_compile_definitions(run_tests PRIVATE ENABLE_CATALOG_TESTING_HOOKS)
-
 # Discover and add tests to CTest automatically
 include(GoogleTest)
 gtest_discover_tests(run_tests)

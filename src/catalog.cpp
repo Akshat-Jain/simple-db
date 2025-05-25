@@ -15,11 +15,22 @@ namespace catalog {
     static std::filesystem::path catalog_file_path;
 
     void initialize(const std::filesystem::path &data_directory) {
-        if (!catalog_file_path.empty()) {
-            logging::log.warn("Catalog has already been initialized.");
+        std::filesystem::path new_path = data_directory / "catalog.json";
+
+        // If it’s already initialized for *this* path, do nothing
+        if (catalog_file_path == new_path) {
+            logging::log.warn("Catalog already initialized for {}", new_path.string());
             return;
         }
-        catalog_file_path = data_directory / "catalog.json";
+
+        // If it was initialized for a *different* path, clear out the old state
+        if (!catalog_file_path.empty() && catalog_file_path != new_path) {
+            logging::log.info("Re-initializing catalog: clearing previous state");
+            catalog.clear();
+            catalog_file_path.clear();
+        }
+
+        catalog_file_path = new_path;
         logging::log.info("Initializing catalog: {}", catalog_file_path.string());
 
         if (!std::filesystem::exists(catalog_file_path)) {
@@ -174,20 +185,4 @@ namespace catalog {
     const std::vector<TableSchema> &get_all_schemas() {
         return catalog;
     }
-
-    // --- Testing Hooks Implementation ---
-    #ifdef ENABLE_CATALOG_TESTING_HOOKS
-    void reset_internal_state_for_testing() {
-        logging::log.debug("Catalog internal state is being reset for testing.");
-
-        // Reset the in-memory catalog vector
-        catalog.clear();
-        // Alternatively: catalog = {}; // Assign an empty vector
-
-        // Reset the stored catalog file path
-        catalog_file_path.clear(); // For std::filesystem::path, .clear() makes it an empty path
-
-        logging::log.debug("Catalog internal state reset complete.");
-    }
-    #endif // ENABLE_CATALOG_TESTING_HOOKS
 }
