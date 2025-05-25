@@ -58,19 +58,16 @@ protected:
         }
     }
 
-//    static std::optional<std::vector<catalog::TableSchema>> loadTestCatalogFromFile() {
-//        return catalog::get_all_schemas();
-//    }
     std::optional<std::vector<catalog::TableSchema>> loadCatalogFromDisk() {
         if (!std::filesystem::exists(expected_catalog_json_path)) {
-            return std::vector<catalog::TableSchema>{}; // Consistent with how initialize handles non-existent
+            return std::vector<catalog::TableSchema>{};
         }
         std::ifstream ifs(expected_catalog_json_path);
         if (!ifs.is_open()) return std::nullopt;
         try {
             json j;
             ifs >> j;
-            if (ifs.fail() && !ifs.eof()) return std::nullopt; // Basic stream check
+            if (ifs.fail() && !ifs.eof()) return std::nullopt;
             return j.get<std::vector<catalog::TableSchema>>();
         } catch (const std::exception&) {
             return std::nullopt;

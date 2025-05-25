@@ -6,13 +6,9 @@
 
 #include <gtest/gtest.h>
 #include <fstream>
-
-#include "simpledb/catalog.h"
 #include "simpledb/command.h"
 #include "simpledb/utils/logging.h"
-#include <gtest/gtest.h>
 #include <filesystem>
-#include <fstream>
 #include <vector>
 #include <nlohmann/json.hpp>
 
@@ -37,13 +33,13 @@ protected:
         expected_catalog_json_path = test_data_dir / "catalog.json";
 
         // 2. Reset the catalog module's internal static state
-#ifdef ENABLE_CATALOG_TESTING_HOOKS
+        #ifdef ENABLE_CATALOG_TESTING_HOOKS
         catalog::reset_internal_state_for_testing();
-#else
+        #else
         // If the hook isn't available, tests for initialize might behave unexpectedly
         // after the first one, as the catalog module won't re-read its path.
         logging::log.warn("ENABLE_CATALOG_TESTING_HOOKS not defined. Catalog tests may not be fully isolated.");
-#endif
+        #endif
 
         // 3. Initialize the catalog module to use this test's specific data directory.
         catalog::initialize(test_data_dir);
@@ -320,8 +316,7 @@ TEST_F(CatalogTest, InitializeWithValidEmptyArrayFileResultsInEmptyCatalog) {
     }
     ASSERT_TRUE(std::filesystem::exists(expected_catalog_json_path));
 
-    // Call catalog::initialize() which should now read this "[]" file.
-    catalog::initialize(test_data_dir); // test_data_dir_ is from fixture
+    catalog::initialize(test_data_dir);
     const auto& schemas_in_memory = catalog::get_all_schemas();
     ASSERT_TRUE(schemas_in_memory.empty())
                                 << "Catalog should be empty after initializing with a file containing '[]'.";
