@@ -10,6 +10,16 @@
 
 namespace parser {
 
+    enum class CommandType {
+        CREATE_TABLE,
+        INSERT,
+        SELECT,
+        DROP_TABLE,
+        UNKNOWN
+    };
+
+    CommandType get_command_type(const std::string& query);
+
     std::optional<command::CreateTableCommand> parse_create_table(const std::string& query);
 
     std::optional<command::InsertCommand> parse_insert(const std::string& query);

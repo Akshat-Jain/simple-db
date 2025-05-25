@@ -3,7 +3,6 @@
 //
 
 #include <iostream>
-#include <sstream>
 #include <readline/readline.h>
 #include <readline/history.h>
 
@@ -12,144 +11,31 @@
 #include "simpledb/parser.h"
 #include "simpledb/utils/logging.h"
 #include "simpledb/catalog.h"
+#include "simpledb/executor.h"
 
 static catalog::CatalogData catalog_data;
 
-std::string handle_create_table(const std::string& query) {
-    std::optional<command::CreateTableCommand> table_command = parser::parse_create_table(query);
-    if (!table_command) {
-        return "ERROR: Failed to parse CREATE TABLE command.";
-    }
-    logging::log.info("Parsed CREATE TABLE command successfully for table: {}", table_command->table_name);
-
-    for (auto & i : catalog_data) {
-        if (i.table_name == table_command->table_name) {
-            logging::log.error("Table '{}' already exists in the catalog.", table_command->table_name);
-            return "ERROR: Table " + table_command->table_name + " already exists.";
-        }
-    }
-
-    catalog::TableSchema table_schema = {table_command->table_name, table_command->column_definitions};
-
-    std::filesystem::path catalog_file_path = config::get_config().data_dir / "catalog.json";
-    bool in_memory_catalog_updated = false;
-    bool disk_catalog_successfully_updated = false;
-    std::filesystem::path table_data_path;
-
-    try {
-        // --- Step 1: Add to in-memory catalog ---
-        catalog_data.push_back(table_schema);
-        in_memory_catalog_updated = true;
-
-        // --- Step 2: Save catalog to disk ---
-        if (!catalog::save_catalog(catalog_file_path, catalog_data)) {
-            throw std::runtime_error("Failed to save catalog to disk.");
-        }
-        disk_catalog_successfully_updated = true;
-        logging::log.info("Catalog updated successfully on disk with new table: {}", table_schema.table_name);
-
-        // --- Step 3: Create data file ---
-        table_data_path = config::get_config().data_dir / (table_schema.table_name + ".data");
-        std::ofstream table_data_file(table_data_path);
-        if (!table_data_file.is_open()) {
-            throw std::runtime_error("Failed to create data file (could not open). Path: " + table_data_path.string());
-        }
-        table_data_file.close();
-        if (table_data_file.fail()) {
-            throw std::runtime_error("Failed to create data file (error on close). Path: " + table_data_path.string());
-        }
-        logging::log.info("Data file created successfully for table '{}' at {}", table_schema.table_name, table_data_path.string());
-
-        // If all steps succeeded
-        return "OK (Table '" + table_schema.table_name + "' created successfully)";
-    } catch (const std::exception& e) {
-        logging::log.error("Error occurred while creating table '{}': {}", table_command->table_name, e.what());
-
-        // Rollback in-memory catalog if it was updated
-        if (in_memory_catalog_updated) {
-            catalog_data.pop_back();
-            logging::log.info("Rolled back in-memory catalog update for table: {}", table_command->table_name);
-        }
-
-        // If the disk catalog was updated, we need to update it back.
-        if (disk_catalog_successfully_updated) {
-            if (!catalog::save_catalog(catalog_file_path, catalog_data)) {
-                logging::log.error("Failed to rollback disk catalog update for table: {}", table_command->table_name);
-            } else {
-                logging::log.info("Rolled back disk catalog update for table: {}", table_command->table_name);
-            }
-        }
-
-        // If the data file was created, remove it
-        if (std::filesystem::exists(table_data_path)) {
-            std::filesystem::remove(table_data_path);
-            logging::log.info("Removed data file for table: {}", table_command->table_name);
-        }
-
-        return "ERROR: " + std::string(e.what()) + " Table creation aborted.";
-    }
-}
-
-std::string handle_insert(const std::string& query) {
-    std::cout << "DEBUG: Placeholder handle_insert called for: " << query << std::endl;
-    std::optional<command::InsertCommand> insert_command = parser::parse_insert(query);
-    // TODO: Parse table name, values
-    return "OK (Placeholder - Insertion)";
-}
-
-std::string handle_select(const std::string& query) {
-    std::cout << "DEBUG: Placeholder handle_select called for: " << query << std::endl;
-    // TODO: Parse table name, potentially WHERE clause
-    return "OK (Placeholder - Selection results would go here)";
-}
-
 std::string parse_and_execute(const std::string& query) {
-    std::string command;
-
-    // Create an std::stringstream object named 'ss'.
-    // Initialize it with the content of the input 'query' string.
-    // This allows treating the 'query' string like an input stream (e.g., std::cin).
-    std::stringstream ss(query);
-
-    // Use the stream extraction operator (>>) to read from the stringstream 'ss'.
-    // By default, >> skips leading whitespace and reads characters until the *next* whitespace.
-    // The extracted word ("CREATE", "INSERT", "SELECT", etc.) is stored in 'command'.
-    // The stream's internal position moves past the extracted word and the subsequent whitespace.
-    ss >> command;
-
-    // Convert command to upper case for case-insensitive comparison
-    for (char &c : command) {
-        c = static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
-    }
-
-    // Very basic command routing
-    // Note: This assumes perfect spacing and syntax for now!
-    if (command == "CREATE") {
-        // Check for "TABLE" next (a slightly better check)
-        std::string maybe_table;
-        ss >> maybe_table;
-         for (char &c : maybe_table) {
-             c = static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
-         }
-         if (maybe_table == "TABLE") {
-             return handle_create_table(query);
-         }
-    } else if (command == "INSERT") {
-        // Check for "INTO" next
-        std::string maybe_into;
-        ss >> maybe_into;
-        for (char &c : maybe_into) {
-            c = static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
+    parser::CommandType command_type = parser::get_command_type(query);
+    switch (command_type) {
+        case parser::CommandType::CREATE_TABLE: {
+            std::optional<command::CreateTableCommand> table_command = parser::parse_create_table(query);
+            if (!table_command) {
+                return "ERROR: Failed to parse CREATE TABLE command.";
+            }
+            logging::log.info("Parsed CREATE TABLE command successfully for table: {}", table_command->table_name);
+            return executor::execute_create_table_command(table_command.value(), catalog_data, config::get_config().data_dir / "catalog.json");
         }
-        if (maybe_into == "INTO") {
-            return handle_insert(query);
-        }
-    } else if (command == "SELECT") {
-         return handle_select(query); // SELECT * FROM ... or SELECT * FROM ... WHERE ...
+        case parser::CommandType::INSERT:
+            return "OK (Placeholder - INSERT not yet implemented)";
+        case parser::CommandType::SELECT:
+            return "OK (Placeholder - SELECT not yet implemented)";
+        case parser::CommandType::DROP_TABLE:
+            return "OK (Placeholder - DROP TABLE not yet implemented)";
+        case parser::CommandType::UNKNOWN:
+        default:
+            return "ERROR: Unknown or unsupported command.";
     }
-    // Add more commands like UPDATE, DELETE later if needed
-
-    return "ERROR: Unknown or unsupported command.";
 }
 
 void initialize_catalog() {

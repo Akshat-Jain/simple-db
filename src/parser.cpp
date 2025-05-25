@@ -11,6 +11,61 @@
 #include "simpledb/utils/stringutils.h"
 
 namespace parser {
+
+    CommandType get_command_type(const std::string &query) {
+        std::string command;
+
+        // Create an std::stringstream object named 'ss'.
+        // Initialize it with the content of the input 'query' string.
+        // This allows treating the 'query' string like an input stream (e.g., std::cin).
+        std::stringstream ss(query);
+
+        // Use the stream extraction operator (>>) to read from the stringstream 'ss'.
+        // By default, >> skips leading whitespace and reads characters until the *next* whitespace.
+        // The extracted word ("CREATE", "INSERT", "SELECT", etc.) is stored in 'command'.
+        // The stream's internal position moves past the extracted word and the subsequent whitespace.
+        ss >> command;
+
+        // Convert command to upper case for case-insensitive comparison
+        for (char &c : command) {
+            c = static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
+        }
+
+        if (command == "CREATE") {
+            std::string maybe_table;
+            ss >> maybe_table;
+            for (char &c : maybe_table) {
+                c = static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
+            }
+            if (maybe_table == "TABLE") {
+                return CommandType::CREATE_TABLE;
+            }
+        } else if (command == "DROP") {
+            std::string maybe_table;
+            ss >> maybe_table;
+            for (char &c : maybe_table) {
+                c = static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
+            }
+            if (maybe_table == "TABLE") {
+                return CommandType::DROP_TABLE;
+            }
+        } else if (command == "INSERT") {
+            // Check for "INTO" next
+            std::string maybe_into;
+            ss >> maybe_into;
+            for (char &c : maybe_into) {
+                c = static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
+            }
+            if (maybe_into == "INTO") {
+                return CommandType::INSERT;
+            }
+        } else if (command == "SELECT") {
+            return CommandType::SELECT;
+        }
+
+        return CommandType::UNKNOWN;
+    }
+
     std::optional<command::CreateTableCommand> parse_create_table(const std::string &query) {
         logging::log.debug("Query is: {}", query);
         std::string trimmed_query = stringutils::trim(query);
