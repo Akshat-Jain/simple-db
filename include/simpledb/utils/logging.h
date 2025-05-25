@@ -42,6 +42,11 @@ namespace logging {
         }
 
         template <typename... Args>
+        void critical(fmt::format_string<Args...> fmt, Args&&... args) const {
+            getLogger()->critical(fmt, std::forward<Args>(args)...);
+        }
+
+        template <typename... Args>
         void debug(fmt::format_string<Args...> fmt, Args&&... args) const {
             getLogger()->debug(fmt, std::forward<Args>(args)...);
         }
