@@ -4,6 +4,21 @@
 
 #include <gtest/gtest.h>
 
+TEST(Parser, GetCommandType) {
+    ASSERT_EQ(parser::get_command_type("CREATE TABLE my_table (id INT, name TEXT)"), parser::CommandType::CREATE_TABLE);
+    ASSERT_EQ(parser::get_command_type("INSERT INTO my_table VALUES (1, 'Alice')"), parser::CommandType::INSERT);
+    ASSERT_EQ(parser::get_command_type("SELECT * FROM my_table"), parser::CommandType::SELECT);
+    ASSERT_EQ(parser::get_command_type("DROP TABLE my_table"), parser::CommandType::DROP_TABLE);
+    ASSERT_EQ(parser::get_command_type("UNKNOWN COMMAND"), parser::CommandType::UNKNOWN);
+}
+
+TEST(Parser, GetCommandTypeCaseInsensitive) {
+    ASSERT_EQ(parser::get_command_type("create table my_table (id INT, name TEXT)"), parser::CommandType::CREATE_TABLE);
+    ASSERT_EQ(parser::get_command_type("insert into my_table VALUES (1, 'Alice')"), parser::CommandType::INSERT);
+    ASSERT_EQ(parser::get_command_type("select * from my_table"), parser::CommandType::SELECT);
+    ASSERT_EQ(parser::get_command_type("drop table my_table"), parser::CommandType::DROP_TABLE);
+}
+
 TEST(CreateTable, BasicCreateTable) {
     std::string query = "CREATE TABLE my_table (id INT, name TEXT)";
     std::optional<command::CreateTableCommand> table_command = parser::parse_create_table(query);
