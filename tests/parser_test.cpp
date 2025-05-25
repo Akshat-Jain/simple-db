@@ -19,6 +19,13 @@ TEST(Parser, GetCommandTypeCaseInsensitive) {
     ASSERT_EQ(parser::get_command_type("drop table my_table"), parser::CommandType::DROP_TABLE);
 }
 
+TEST(Parser, GetCommandTypeHandlesWhitespace) {
+    ASSERT_EQ(parser::get_command_type("  CREATE TABLE t (a INT)"), parser::CommandType::CREATE_TABLE);
+    ASSERT_EQ(parser::get_command_type("INSERT INTO t VALUES (1)  "), parser::CommandType::INSERT);
+    ASSERT_EQ(parser::get_command_type("SELECT   *   FROM    t"), parser::CommandType::SELECT);
+    ASSERT_EQ(parser::get_command_type("\tDROP\tTABLE\tt"), parser::CommandType::DROP_TABLE);
+}
+
 TEST(CreateTable, BasicCreateTable) {
     std::string query = "CREATE TABLE my_table (id INT, name TEXT)";
     std::optional<command::CreateTableCommand> table_command = parser::parse_create_table(query);
