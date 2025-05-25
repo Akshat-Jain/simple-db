@@ -117,6 +117,7 @@ add_executable(run_tests
         src/utils/stringutils.cpp
         src/catalog.cpp
         src/executor.cpp
+        tests/executor_test.cpp
 )
 
 # --- Configure 'run_tests' Target ---
