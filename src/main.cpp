@@ -24,7 +24,12 @@ std::string parse_and_execute(const std::string& query) {
                 return "ERROR: Failed to parse CREATE TABLE command.";
             }
             logging::log.info("Parsed CREATE TABLE command successfully for table: {}", table_command->table_name);
-            return executor::execute_create_table_command(table_command.value(), catalog_data, config::get_config().data_dir / "catalog.json");
+            return executor::execute_create_table_command(
+                    table_command.value(),
+                    catalog_data,
+                    config::get_config().data_dir / "catalog.json",
+                    config::get_config().data_dir
+                    );
         }
         case parser::CommandType::INSERT:
             return "OK (Placeholder - INSERT not yet implemented)";

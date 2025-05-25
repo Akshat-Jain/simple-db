@@ -10,7 +10,8 @@ namespace executor {
     ExecutionResult execute_create_table_command(
             const command::CreateTableCommand &cmd,
             catalog::CatalogData &catalog_data,
-            const std::filesystem::path &catalog_file_path
+            const std::filesystem::path &catalog_file_path,
+            const std::filesystem::path& table_data_dir
             ) {
         for (auto & i : catalog_data) {
             if (i.table_name == cmd.table_name) {
@@ -38,7 +39,7 @@ namespace executor {
             logging::log.info("Catalog updated successfully on disk with new table: {}", table_schema.table_name);
 
             // --- Step 3: Create data file ---
-            table_data_path = config::get_config().data_dir / (table_schema.table_name + ".data");
+            table_data_path = table_data_dir / (table_schema.table_name + ".data");
             std::ofstream table_data_file(table_data_path);
             if (!table_data_file.is_open()) {
                 throw std::runtime_error("Failed to create data file (could not open). Path: " + table_data_path.string());

@@ -68,7 +68,7 @@ TEST_F(ExecutorCreateTableTest, SuccessfulCreation) {
     cmd.column_definitions.push_back({"id", command::Datatype::INT});
     cmd.column_definitions.push_back({"name", command::Datatype::TEXT});;
 
-    std::string result = executor::execute_create_table_command(cmd, test_in_memory_catalog, test_catalog_file_path);
+    std::string result = executor::execute_create_table_command(cmd, test_in_memory_catalog, test_catalog_file_path, test_base_data_dir);
 
     // Check the result
     ASSERT_EQ(result, "OK (Table 'test_table' created successfully)");
@@ -88,6 +88,6 @@ TEST_F(ExecutorCreateTableTest, SuccessfulCreation) {
     AssertCatalogDataEqual(test_in_memory_catalog, loaded_catalog.value());
 
     // Verify the data file was created
-    std::filesystem::path data_file_path = "test_table.data";
+    std::filesystem::path data_file_path = test_base_data_dir / "test_table.data";
     ASSERT_TRUE(std::filesystem::exists(data_file_path));
 }
