@@ -13,12 +13,12 @@ namespace config {
         std::filesystem::path data_dir;
         std::filesystem::path history_file;
 
-        friend std::ostream & operator<<(std::ostream &os, const Config &obj);
+        friend std::ostream &operator<<(std::ostream &os, const Config &obj);
     };
 
     void init_config();
 
-    const Config& get_config();
-}
+    const Config &get_config();
+}  // namespace config
 
-#endif //CONFIG_H
+#endif  // CONFIG_H

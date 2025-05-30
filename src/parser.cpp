@@ -107,7 +107,8 @@ namespace parser {
         }
 
         // if found, set table_name to the string between find_start_of_table_name and open_paren_pos
-        command.table_name = stringutils::trim(trimmed_query.substr(find_start_of_table_name, open_paren_pos - find_start_of_table_name));
+        command.table_name = stringutils::trim(
+            trimmed_query.substr(find_start_of_table_name, open_paren_pos - find_start_of_table_name));
         // Check if table_name is empty
         if (command.table_name.empty()) {
             std::cerr << "ERROR: Table name is empty." << std::endl;
@@ -127,7 +128,8 @@ namespace parser {
             return std::nullopt;
         }
 
-        std::string column_definition_string = stringutils::trim(trimmed_query.substr(open_paren_pos + 1, close_paren_pos - open_paren_pos - 1));
+        std::string column_definition_string =
+            stringutils::trim(trimmed_query.substr(open_paren_pos + 1, close_paren_pos - open_paren_pos - 1));
         logging::log.debug("Column definition part: [{}]", column_definition_string);
 
         if (!column_definition_string.empty()) {
@@ -145,22 +147,26 @@ namespace parser {
                 std::string remaining;
 
                 if (!(column_definition_sstream >> col_name_str)) {
-                    std::cerr << "ERROR: Failed to parse column name in column definition: [" << column_definition << "]." << std::endl;
+                    std::cerr << "ERROR: Failed to parse column name in column definition: [" << column_definition
+                              << "]." << std::endl;
                     return std::nullopt;
                 }
                 if (!(column_definition_sstream >> col_type_str)) {
-                    std::cerr << "ERROR: Failed to parse column type in column definition: [" << column_definition << "]." << std::endl;
+                    std::cerr << "ERROR: Failed to parse column type in column definition: [" << column_definition
+                              << "]." << std::endl;
                     return std::nullopt;
                 }
                 // Check if there are any extra tokens after the type
                 if (column_definition_sstream >> remaining) {
-                    std::cerr << "ERROR: Extra tokens after column type in column definition: [" << column_definition << "]." << std::endl;
+                    std::cerr << "ERROR: Extra tokens after column type in column definition: [" << column_definition
+                              << "]." << std::endl;
                     return std::nullopt;
                 }
 
                 // Validate column name
                 if (!stringutils::is_alpha_num_underscore(col_name_str)) {
-                    std::cerr << "ERROR: Column name '" << col_name_str << "' contains invalid characters." << std::endl;
+                    std::cerr << "ERROR: Column name '" << col_name_str << "' contains invalid characters."
+                              << std::endl;
                     return std::nullopt;
                 }
                 // TODO: Check against reserved keywords?
@@ -186,4 +192,4 @@ namespace parser {
         std::cout << "Not yet implemented: parse_insert" << std::endl;
         return std::nullopt;
     }
-}
+}  // namespace parser

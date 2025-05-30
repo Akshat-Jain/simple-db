@@ -11,7 +11,8 @@
 
 using json = nlohmann::json;
 
-void AssertCatalogDataEqual(const std::vector<catalog::TableSchema>& expected, const std::vector<catalog::TableSchema>& actual) {
+void AssertCatalogDataEqual(const std::vector<catalog::TableSchema>& expected,
+                            const std::vector<catalog::TableSchema>& actual) {
     ASSERT_EQ(expected.size(), actual.size());
     for (size_t i = 0; i < expected.size(); ++i) {
         ASSERT_EQ(expected[i].table_name, actual[i].table_name);
@@ -23,19 +24,17 @@ void AssertCatalogDataEqual(const std::vector<catalog::TableSchema>& expected, c
     }
 }
 
-
 class ExecutorCreateTableTest : public ::testing::Test {
-protected:
+   protected:
     std::filesystem::path test_data_dir;
     std::filesystem::path expected_catalog_json_path;
 
     void SetUp() override {
         // Create a unique temporary directory for each test run using this fixture
         // to ensure isolation. Using the test name can help.
-        const ::testing::TestInfo* const test_info =
-                ::testing::UnitTest::GetInstance()->current_test_info();
+        const ::testing::TestInfo* const test_info = ::testing::UnitTest::GetInstance()->current_test_info();
         test_data_dir = std::filesystem::temp_directory_path() /
-                             (std::string("simpledb_tests_") + test_info->test_suite_name() + "_" + test_info->name());
+                        (std::string("simpledb_tests_") + test_info->test_suite_name() + "_" + test_info->name());
 
         if (std::filesystem::exists(test_data_dir)) {
             std::filesystem::remove(test_data_dir);
@@ -74,7 +73,8 @@ TEST_F(ExecutorCreateTableTest, SuccessfulCreateTable) {
     command::CreateTableCommand cmd;
     cmd.table_name = "test_table";
     cmd.column_definitions.push_back({"id", command::Datatype::INT});
-    cmd.column_definitions.push_back({"name", command::Datatype::TEXT});;
+    cmd.column_definitions.push_back({"name", command::Datatype::TEXT});
+    ;
 
     std::string result = executor::execute_create_table_command(cmd, test_data_dir);
 
@@ -113,7 +113,7 @@ TEST_F(ExecutorCreateTableTest, DuplicateTableName) {
 
     // Now try to create a table with the same name
     command::CreateTableCommand cmd2;
-    cmd2.table_name = "duplicate_table_name"; // Same name as before
+    cmd2.table_name = "duplicate_table_name";  // Same name as before
     cmd2.column_definitions.push_back({"id", command::Datatype::INT});
     cmd2.column_definitions.push_back({"description", command::Datatype::TEXT});
 

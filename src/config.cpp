@@ -2,7 +2,6 @@
 // Created by Akshat Jain on 19/04/25.
 //
 
-
 #include "simpledb/config.h"
 
 #include <iostream>
@@ -59,7 +58,5 @@ namespace config {
      * where the left operand is an output stream (like `std::cout`, which is a `std::ostream`)
      * and the right operand is a `const Config&`, this function should be called.
      */
-    std::ostream & operator<<(std::ostream &os, const Config &obj) {
-        return os << "data_dir: " << obj.data_dir;
-    }
-}
+    std::ostream& operator<<(std::ostream& os, const Config& obj) { return os << "data_dir: " << obj.data_dir; }
+}  // namespace config

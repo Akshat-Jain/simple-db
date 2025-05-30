@@ -31,10 +31,8 @@ namespace executor {
      * @param table_data_dir The directory where table data files will be stored (e.g., "data/").
      * @return ExecutionResult A string indicating success or failure.
      */
-    ExecutionResult execute_create_table_command(
-            const command::CreateTableCommand& cmd,
-            const std::filesystem::path& table_data_dir
-    );
-}
+    ExecutionResult execute_create_table_command(const command::CreateTableCommand& cmd,
+                                                 const std::filesystem::path& table_data_dir);
+}  // namespace executor
 
-#endif //SIMPLE_DB_EXECUTOR_H
+#endif  // SIMPLE_DB_EXECUTOR_H

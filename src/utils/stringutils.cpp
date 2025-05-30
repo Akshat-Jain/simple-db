@@ -13,7 +13,7 @@ namespace stringutils {
         size_t first = str.find_first_not_of(" \t\n\r\f\v");
         // If the string is all whitespace, return an empty string or the original
         if (std::string::npos == first) {
-            return ""; // Return empty is often cleaner than returning all whitespace
+            return "";  // Return empty is often cleaner than returning all whitespace
             // return str;
         }
         // Find the last non-whitespace character
@@ -23,11 +23,11 @@ namespace stringutils {
     }
 
     std::string to_upper(std::string s) {
-        std::transform(s.begin(), s.end(), s.begin(),[](unsigned char c){ return std::toupper(c); });
+        std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c) { return std::toupper(c); });
         return s;
     }
 
     bool is_alpha_num_underscore(std::string s) {
-        return std::all_of(s.begin(), s.end(), [](char c){ return std::isalnum(c) || c == '_'; });
+        return std::all_of(s.begin(), s.end(), [](char c) { return std::isalnum(c) || c == '_'; });
     }
-}
+}  // namespace stringutils

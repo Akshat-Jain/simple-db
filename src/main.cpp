@@ -22,10 +22,7 @@ std::string parse_and_execute(const std::string& query) {
                 return "ERROR: Failed to parse CREATE TABLE command.";
             }
             logging::log.info("Parsed CREATE TABLE command successfully for table: {}", table_command->table_name);
-            return executor::execute_create_table_command(
-                    table_command.value(),
-                    config::get_config().data_dir
-                    );
+            return executor::execute_create_table_command(table_command.value(), config::get_config().data_dir);
         }
         case parser::CommandType::INSERT:
             return "OK (Placeholder - INSERT not yet implemented)";
@@ -77,7 +74,7 @@ int main() {
 
         // IMPORTANT: Free the memory allocated by readline()
         free(line_read_c);
-        line_read_c = nullptr; // Good practice to null dangling pointers
+        line_read_c = nullptr;  // Good practice to null dangling pointers
 
         if (input_line == "exit" || input_line == "quit") {
             std::cout << "Exiting." << std::endl;

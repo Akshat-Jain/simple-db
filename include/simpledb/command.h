@@ -9,16 +9,9 @@
 #include "nlohmann/json.hpp"
 
 namespace command {
-    enum class Datatype {
-        INT,
-        TEXT,
-        UNKNOWN
-    };
-    NLOHMANN_JSON_SERIALIZE_ENUM(Datatype, {
-        {Datatype::INT, "INT"},
-        {Datatype::TEXT, "TEXT"},
-        {Datatype::UNKNOWN, "UNKNOWN"}
-    })
+    enum class Datatype { INT, TEXT, UNKNOWN };
+    NLOHMANN_JSON_SERIALIZE_ENUM(Datatype,
+                                 {{Datatype::INT, "INT"}, {Datatype::TEXT, "TEXT"}, {Datatype::UNKNOWN, "UNKNOWN"}})
 
     struct ColumnDefinition {
         std::string column_name;
@@ -33,8 +26,8 @@ namespace command {
 
     struct InsertCommand {
         std::string table_name;
-        std::vector<std::string> values; // Assumption: The values match column order/type
+        std::vector<std::string> values;  // Assumption: The values match column order/type
     };
-}
+}  // namespace command
 
-#endif //COMMAND_H
+#endif  // COMMAND_H

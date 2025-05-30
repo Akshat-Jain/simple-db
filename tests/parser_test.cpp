@@ -29,13 +29,13 @@ TEST(Parser, GetCommandTypeHandlesWhitespace) {
 TEST(Parser, GetCommandTypeHandlesPartialOrIncorrectKeywords) {
     // First keyword is known, but second (if expected) is missing or wrong
     ASSERT_EQ(parser::get_command_type("CREATE mytable (id INT)"), parser::CommandType::UNKNOWN);
-    ASSERT_EQ(parser::get_command_type("CREATE"), parser::CommandType::UNKNOWN); // CREATE alone
+    ASSERT_EQ(parser::get_command_type("CREATE"), parser::CommandType::UNKNOWN);  // CREATE alone
 
     ASSERT_EQ(parser::get_command_type("INSERT mytable VALUES (1)"), parser::CommandType::UNKNOWN);
-    ASSERT_EQ(parser::get_command_type("INSERT"), parser::CommandType::UNKNOWN); // INSERT alone
+    ASSERT_EQ(parser::get_command_type("INSERT"), parser::CommandType::UNKNOWN);  // INSERT alone
 
     ASSERT_EQ(parser::get_command_type("DROP mytable"), parser::CommandType::UNKNOWN);
-    ASSERT_EQ(parser::get_command_type("DROP"), parser::CommandType::UNKNOWN); // DROP alone
+    ASSERT_EQ(parser::get_command_type("DROP"), parser::CommandType::UNKNOWN);  // DROP alone
 
     // SELECT doesn't have a mandatory second keyword for get_command_type, so "SELECT" alone is fine.
 }

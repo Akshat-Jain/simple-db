@@ -10,7 +10,6 @@
 
 #include "command.h"
 
-
 namespace catalog {
 
     struct TableSchema {
@@ -20,12 +19,12 @@ namespace catalog {
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(TableSchema, table_name, column_definitions)
 
     /**
-       * @brief Initializes the catalog system.
-       * This must be called once at application startup before other catalog functions are used.
-       * It loads the catalog from disk (if it exists) or prepares an empty catalog.
-       * Handles critical errors if an existing catalog is corrupt by exiting.
-       * @param data_directory The base directory where the catalog file (e.g., "catalog.json") resides.
-       */
+     * @brief Initializes the catalog system.
+     * This must be called once at application startup before other catalog functions are used.
+     * It loads the catalog from disk (if it exists) or prepares an empty catalog.
+     * Handles critical errors if an existing catalog is corrupt by exiting.
+     * @param data_directory The base directory where the catalog file (e.g., "catalog.json") resides.
+     */
     void initialize(const std::filesystem::path& data_directory);
 
     /**
@@ -58,5 +57,5 @@ namespace catalog {
      * @return A vector of TableSchema objects representing all tables in the catalog.
      */
     const std::vector<TableSchema>& get_all_schemas();
-}
-#endif //CATALOG_H
+}  // namespace catalog
+#endif  // CATALOG_H

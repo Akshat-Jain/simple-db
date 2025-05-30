@@ -7,10 +7,8 @@
 #include "simpledb/config.h"
 
 namespace executor {
-    ExecutionResult execute_create_table_command(
-            const command::CreateTableCommand &cmd,
-            const std::filesystem::path& table_data_dir
-            ) {
+    ExecutionResult execute_create_table_command(const command::CreateTableCommand& cmd,
+                                                 const std::filesystem::path& table_data_dir) {
         if (catalog::table_exists(cmd.table_name)) {
             logging::log.error("Table '{}' already exists in the catalog.", cmd.table_name);
             return "ERROR: Table " + cmd.table_name + " already exists.";
@@ -28,19 +26,24 @@ namespace executor {
                 throw std::runtime_error("Failed to add table to catalog and persist catalog changes.");
             }
             catalog_successfully_updated = true;
-            logging::log.info("Table '{}' successfully added to catalog (in-memory and on disk).", table_schema.table_name);
+            logging::log.info("Table '{}' successfully added to catalog (in-memory and on disk).",
+                              table_schema.table_name);
 
             // --- Step 2: Create data file ---
             table_data_path = table_data_dir / (table_schema.table_name + ".data");
             std::ofstream table_data_file(table_data_path);
             if (!table_data_file.is_open()) {
-                throw std::runtime_error("Failed to create data file (could not open). Path: " + table_data_path.string());
+                throw std::runtime_error("Failed to create data file (could not open). Path: " +
+                                         table_data_path.string());
             }
             table_data_file.close();
             if (table_data_file.fail()) {
-                throw std::runtime_error("Failed to create data file (error on close). Path: " + table_data_path.string());
+                throw std::runtime_error("Failed to create data file (error on close). Path: " +
+                                         table_data_path.string());
             }
-            logging::log.info("Data file created successfully for table '{}' at {}", table_schema.table_name, table_data_path.string());
+            logging::log.info("Data file created successfully for table '{}' at {}",
+                              table_schema.table_name,
+                              table_data_path.string());
 
             // If all steps succeeded
             return "OK (Table '" + table_schema.table_name + "' created successfully)";
@@ -65,4 +68,4 @@ namespace executor {
             return "ERROR: " + std::string(e.what()) + " Table creation aborted.";
         }
     }
-}
+}  // namespace executor

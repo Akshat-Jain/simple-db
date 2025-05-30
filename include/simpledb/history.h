@@ -12,6 +12,6 @@ namespace history {
     // Save the in-memory history back to the history file.
     // Should be called just before program exit.
     void save();
-}
+}  // namespace history
 
-#endif //HISTORY_H
+#endif  // HISTORY_H

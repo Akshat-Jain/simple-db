@@ -54,6 +54,6 @@ namespace logging {
 
     inline const LoggerWrapper log;
 
-} // namespace logging
+}  // namespace logging
 
-#endif // LOGGING_H
+#endif  // LOGGING_H

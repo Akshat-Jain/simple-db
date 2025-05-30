@@ -7,7 +7,7 @@
 
 #include <string>
 
-namespace stringutils { // Group utility functions
+namespace stringutils {  // Group utility functions
 
     /**
      * @brief Removes leading and trailing whitespace from a string.
@@ -30,6 +30,6 @@ namespace stringutils { // Group utility functions
      */
     bool is_alpha_num_underscore(std::string s);
 
-}
+}  // namespace stringutils
 
-#endif //STRINGUTILS_H
+#endif  // STRINGUTILS_H

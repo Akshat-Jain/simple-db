@@ -43,7 +43,8 @@ namespace history {
         if (write_history(history_file_path.c_str()) == 0) {
             logging::log.info("Successfully saved history to: {}", history_file_path.string());
         } else {
-            logging::log.error("Failed to write history to: {}. Check permissions and path.", history_file_path.string());
+            logging::log.error("Failed to write history to: {}. Check permissions and path.",
+                               history_file_path.string());
         }
     }
-}
+}  // namespace history
