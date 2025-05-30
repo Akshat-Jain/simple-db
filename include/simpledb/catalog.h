@@ -10,8 +10,22 @@
 
 #include "command.h"
 
+/**
+ * Catalog is database about the database.
+ * 1. Postgres: Info stored in pg_catalog schema. It has tables like pg_class, pg_tables, pg_attribute, etc.
+ *               User table data is typically stored in separate files on disk,
+ * 2. MySQL: Table definitions are stored in .frm files. Table data is stored in .ibd files.
+ * 3. sqlite: sqlite_master table
+ */
 namespace catalog {
 
+    /*
+     * @brief Represents the schema of a table in the catalog.
+     * It's different from CreateTableCommand (maybe it is the same initially, but it won't be eventually). For example:
+     *  1. CREATE INDEX command should update the TableSchema.
+     *  2. TableSchema can contain auto-generated names of constraints if the user hasn't supplied them
+     *     (for example, UNIQUE constraint)
+     */
     struct TableSchema {
         std::string table_name;
         std::vector<command::ColumnDefinition> column_definitions;

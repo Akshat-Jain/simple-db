@@ -18,6 +18,20 @@ cmake --build build
 ./build/simple-db
 ```
 
+## clang-format
+
+If you want to format the code using `clang-format`, you can run the following command:
+
+```bash
+clang-format src/**/*.cpp include/**/*.h tests/**/*.cpp -i
+```
+
+For validating the formatting, you can use:
+
+```bash
+clang-format src/**/*.cpp include/**/*.h tests/**/*.cpp --dry-run -Werror
+```
+
 ## pkg-config (macOS)
 
 If the `cmake -S . -B build` command fails with errors mentioning it cannot find some package like `readline` or `readline.pc` via `pkg-config`, it might be because `pkg-config` isn't searching the directory where Homebrew installed the `readline.pc` file.
