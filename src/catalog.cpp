@@ -25,6 +25,10 @@ namespace catalog {
 
         // If it was initialized for a *different* path, clear out the old state
         if (!catalog_file_path.empty() && catalog_file_path != new_path) {
+            // This is a weird way of handling things and it exists this way only to allow {@link catalog_test.cpp}
+            // to be tested with different catalog files.
+            // todo: In the future, we can consider refactoring this to maybe having a Catalog class returned to the caller,
+            // which gets passed around instead of using a global state.
             logging::log.info("Re-initializing catalog: clearing previous state");
             catalog.clear();
             catalog_file_path.clear();
