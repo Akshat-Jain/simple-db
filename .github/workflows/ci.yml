@@ -16,7 +16,17 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y cmake pkg-config libreadline-dev clang-format-20
+          sudo apt-get install -y cmake pkg-config libreadline-dev
+
+      - name: Install LLVM/Clang 20 tools
+        run: |
+          wget https://apt.llvm.org/llvm.sh
+          chmod +x llvm.sh
+          sudo ./llvm.sh 20 all # 'all' installs all tools, or specify clang-format-20 if possible
+          # sudo apt-get install -y clang-format-20 # Might be needed after adding the repo via llvm.sh
+          # Verify
+          clang-format-20 --version
+          clang-format --version
 
       - name: Validate Formatting
         run: clang-format -i src/**/*.cpp include/**/*.h tests/**/*.cpp --dry-run -Werror
