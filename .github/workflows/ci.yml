@@ -33,8 +33,9 @@ jobs:
 
       - name: Validate Formatting
         run: |
+          clang-format --version
           find src include tests -type f \( -name "*.cpp" -o -name "*.h" -o -name "*.hpp" \) -print0 | \
-          xargs -0 clang-format-20 --dry-run -Werror
+          xargs -0 clang-format --dry-run -Werror
 
       # Configure the project using CMake
       # Note: We probably don't need CMAKE_PREFIX_PATH or PKG_CONFIG_PATH here
