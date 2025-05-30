@@ -24,13 +24,16 @@ jobs:
           chmod +x llvm.sh
           sudo ./llvm.sh 20 all # 'all' installs all tools
           clang-format-20 --version
+          which clang-format-20
+          which clang-format
           
           clang-format --version
           sudo ln -sf /usr/bin/clang-format-20 /usr/local/bin/clang-format
           clang-format --version
 
       - name: Validate Formatting
-        run: find src include tests -type f \( -name "*.cpp" -o -name "*.h" -o -name "*.hpp" \) -print0 |\
+        run: |
+          find src include tests -type f \( -name "*.cpp" -o -name "*.h" -o -name "*.hpp" \) -print0 | \
           xargs -0 clang-format-20 --dry-run -Werror
 
       # Configure the project using CMake
