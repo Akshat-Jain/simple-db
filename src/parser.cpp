@@ -12,7 +12,8 @@
 
 namespace parser {
 
-    CommandType get_command_type(const std::string &query) {
+    CommandType get_command_type(const std::string &query)
+    {
         std::string command;
 
         // Create an std::stringstream object named 'ss'.

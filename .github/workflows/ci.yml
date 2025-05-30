@@ -28,7 +28,7 @@ jobs:
           which clang-format
           
           clang-format --version
-          sudo ln -sf /usr/bin/clang-format-20 /usr/local/bin/clang-format
+          sudo ln -sf /usr/bin/clang-format-20 /usr/bin/clang-format
           clang-format --version
 
       - name: Validate Formatting
