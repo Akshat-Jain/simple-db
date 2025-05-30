@@ -28,6 +28,9 @@ jobs:
       - name: Build
         run: cmake --build ${{github.workspace}}/build
 
+      - name: Validate Formatting
+        run: clang-format -i src/**/*.cpp include/**/*.h tests/**/*.cpp --dry-run -Werror
+
       - name: Run Tests
         working-directory: ${{github.workspace}}/build
         run: ctest --output-on-failure
