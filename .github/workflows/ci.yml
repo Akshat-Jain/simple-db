@@ -26,10 +26,9 @@ jobs:
           # sudo apt-get install -y clang-format-20 # Might be needed after adding the repo via llvm.sh
           # Verify
           clang-format-20 --version
-          clang-format --version
 
       - name: Validate Formatting
-        run: clang-format -i src/**/*.cpp include/**/*.h tests/**/*.cpp --dry-run -Werror
+        run: clang-format-20 -i src/**/*.cpp include/**/*.h tests/**/*.cpp --dry-run -Werror
 
       # Configure the project using CMake
       # Note: We probably don't need CMAKE_PREFIX_PATH or PKG_CONFIG_PATH here
