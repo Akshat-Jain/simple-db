@@ -23,15 +23,15 @@ jobs:
           wget https://apt.llvm.org/llvm.sh
           chmod +x llvm.sh
           sudo ./llvm.sh 20 all # 'all' installs all tools
-          # sudo apt-get install -y clang-format-20 # Might be needed after adding the repo via llvm.sh
-          # Verify
           clang-format-20 --version
-
-      - name: Find files
-        run: find src include tests -type f \( -name "*.cpp" -o -name "*.h" -o -name "*.hpp" \) -print0 | xargs -0
+          
+          clang-format --version
+          sudo ln -sf /usr/bin/clang-format-20 /usr/local/bin/clang-format
+          clang-format --version
 
       - name: Validate Formatting
-        run: find src include tests -type f \( -name "*.cpp" -o -name "*.h" -o -name "*.hpp" \) -print0 | xargs -0 clang-format-20 --dry-run -Werror
+        run: find src include tests -type f \( -name "*.cpp" -o -name "*.h" -o -name "*.hpp" \) -print0 |\
+          xargs -0 clang-format-20 --dry-run -Werror
 
       # Configure the project using CMake
       # Note: We probably don't need CMAKE_PREFIX_PATH or PKG_CONFIG_PATH here
