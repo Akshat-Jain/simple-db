@@ -111,3 +111,42 @@ TEST(CreateTable, ExtraTokensInColumnDefinition) {
     std::optional<command::CreateTableCommand> table_command = parser::parse_create_table(query);
     ASSERT_FALSE(table_command.has_value());
 }
+
+TEST(DropTable, BasicDropTable) {
+    std::optional<command::DropTableCommand> cmd = parser::parse_drop_table("DROP TABLE my_table");
+
+    ASSERT_TRUE(cmd.has_value());
+    ASSERT_EQ("my_table", cmd->table_name);
+}
+
+TEST(DropTable, ExtraWhitespace) {
+    std::optional<command::DropTableCommand> cmd = parser::parse_drop_table("   DROP   TABLE   my_table   ");
+
+    ASSERT_TRUE(cmd.has_value());
+    ASSERT_EQ("my_table", cmd->table_name);
+}
+
+TEST(DropTable, MissingDropKeyword) {
+    std::optional<command::DropTableCommand> cmd = parser::parse_drop_table("TABLE my_table");
+    ASSERT_FALSE(cmd.has_value());
+}
+
+TEST(DropTable, MissingTableKeyword) {
+    std::optional<command::DropTableCommand> cmd = parser::parse_drop_table("DROP my_table");
+    ASSERT_FALSE(cmd.has_value());
+}
+
+TEST(DropTable, NoTableName) {
+    std::optional<command::DropTableCommand> cmd = parser::parse_drop_table("DROP TABLE");
+    ASSERT_FALSE(cmd.has_value());
+}
+
+TEST(DropTable, InvalidTableNameCharacters) {
+    std::optional<command::DropTableCommand> cmd = parser::parse_drop_table("DROP TABLE my-table");
+    ASSERT_FALSE(cmd.has_value());
+}
+
+TEST(DropTable, ExtraTokens) {
+    std::optional<command::DropTableCommand> cmd = parser::parse_drop_table("DROP TABLE my_table extra_token");
+    ASSERT_FALSE(cmd.has_value());
+}
