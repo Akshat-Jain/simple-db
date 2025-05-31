@@ -188,6 +188,54 @@ namespace parser {
         return command;
     }
 
+    std::optional<command::DropTableCommand> parse_drop_table(const std::string &query) {
+        logging::log.debug("Query is: {}", query);
+        std::string trimmed_query = stringutils::trim(query);
+        logging::log.debug("Query after trimming is: {}", trimmed_query);
+
+        command::DropTableCommand command;
+
+        std::stringstream ss(trimmed_query);
+        std::string token;
+
+        // 1. The first word should be DROP
+        if (!(ss >> token) || stringutils::to_upper(token) != "DROP") {
+            std::cerr << "ERROR: Expected DROP keyword." << std::endl;
+            return std::nullopt;
+        }
+
+        // 2. The second word should be TABLE
+        if (!(ss >> token) || stringutils::to_upper(token) != "TABLE") {
+            std::cerr << "ERROR: Expected TABLE keyword." << std::endl;
+            return std::nullopt;
+        }
+
+        // 3. The third word should be the table name.
+        ss >> command.table_name;
+
+        // 4. Table name should be valid.
+        if (command.table_name.empty()) {
+            std::cerr << "ERROR: Table name is empty." << std::endl;
+            return std::nullopt;
+        }
+
+        // Check if table_name is a valid identifier (alphanumeric and underscores)
+        if (!stringutils::is_alpha_num_underscore(command.table_name)) {
+            std::cerr << "ERROR: Table name '" + command.table_name << "' contains invalid characters." << std::endl;
+            return std::nullopt;
+        }
+
+        // 5. The stream shouldn't have any more tokens after the table name.
+        if (ss >> token) {
+            std::cerr << "ERROR: Invalid DROP TABLE command. Parsed table name as '" << command.table_name
+                      << "', but found extra tokens after it: '" << token << "'." << std::endl;
+            return std::nullopt;
+        }
+
+        logging::log.debug("Parsed DROP TABLE command for table: {}", command.table_name);
+        return command;
+    }
+
     std::optional<command::InsertCommand> parse_insert([[maybe_unused]] const std::string &query) {
         std::cout << "Not yet implemented: parse_insert" << std::endl;
         return std::nullopt;

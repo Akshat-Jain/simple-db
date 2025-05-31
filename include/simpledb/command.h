@@ -24,6 +24,10 @@ namespace command {
         std::vector<ColumnDefinition> column_definitions;
     };
 
+    struct DropTableCommand {
+        std::string table_name;
+    };
+
     struct InsertCommand {
         std::string table_name;
         std::vector<std::string> values;  // Assumption: The values match column order/type

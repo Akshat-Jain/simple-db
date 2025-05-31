@@ -68,4 +68,46 @@ namespace executor {
             return "ERROR: " + std::string(e.what()) + " Table creation aborted.";
         }
     }
+
+    ExecutionResult execute_drop_table_command(const command::DropTableCommand& cmd,
+                                               const std::filesystem::path& table_data_dir) {
+        std::string table_name = cmd.table_name;
+        if (!catalog::table_exists(table_name)) {
+            return "ERROR: Table '" + table_name + "' does not exist.";
+        }
+        logging::log.info("Attempting to drop table '{}'", table_name);
+        std::filesystem::path table_data_path = table_data_dir / (table_name + ".data");
+        // --- Transaction-like block for catalog update and data file deletion ---
+
+        bool catalog_successfully_updated = false;
+        try {
+            // --- Step 1: Remove table from catalog (in-memory and disk) ---
+            if (!catalog::remove_table(table_name)) {
+                throw std::runtime_error("Failed to remove table from catalog.");
+            }
+            catalog_successfully_updated = true;
+
+            // --- Step 2: Remove data file ---
+            if (std::filesystem::exists(table_data_path)) {
+                std::filesystem::remove(table_data_path);
+                logging::log.info(
+                    "Data file for table '{}' removed successfully at {}", table_name, table_data_path.string());
+            } else {
+                logging::log.warn(
+                    "Data file for table '{}' does not exist at {}", table_name, table_data_path.string());
+            }
+            return "OK (Table '" + table_name + "' dropped successfully)";
+        } catch (const std::exception& e) {
+            if (catalog_successfully_updated) {
+                logging::log.error(
+                    "CRITICAL: Table '{}' removed from catalog, but data file operation failed. Data file {} may be "
+                    "orphaned. Reason: {}",
+                    table_name,
+                    table_data_path.string(),
+                    e.what());
+            }
+
+            return "ERROR: DROP TABLE failed for table '" + table_name + "'. Reason: " + e.what();
+        }
+    }
 }  // namespace executor

@@ -17,19 +17,25 @@ std::string parse_and_execute(const std::string& query) {
     parser::CommandType command_type = parser::get_command_type(query);
     switch (command_type) {
         case parser::CommandType::CREATE_TABLE: {
-            std::optional<command::CreateTableCommand> table_command = parser::parse_create_table(query);
-            if (!table_command) {
+            std::optional<command::CreateTableCommand> cmd = parser::parse_create_table(query);
+            if (!cmd) {
                 return "ERROR: Failed to parse CREATE TABLE command.";
             }
-            logging::log.info("Parsed CREATE TABLE command successfully for table: {}", table_command->table_name);
-            return executor::execute_create_table_command(table_command.value(), config::get_config().data_dir);
+            logging::log.info("Parsed CREATE TABLE command successfully for table: {}", cmd->table_name);
+            return executor::execute_create_table_command(cmd.value(), config::get_config().data_dir);
+        }
+        case parser::CommandType::DROP_TABLE: {
+            std::optional<command::DropTableCommand> cmd = parser::parse_drop_table(query);
+            if (!cmd) {
+                return "ERROR: Failed to parse DROP TABLE command.";
+            }
+            logging::log.info("Parsed DROP TABLE command successfully for table: {}", cmd->table_name);
+            return executor::execute_drop_table_command(cmd.value(), config::get_config().data_dir);
         }
         case parser::CommandType::INSERT:
             return "OK (Placeholder - INSERT not yet implemented)";
         case parser::CommandType::SELECT:
             return "OK (Placeholder - SELECT not yet implemented)";
-        case parser::CommandType::DROP_TABLE:
-            return "OK (Placeholder - DROP TABLE not yet implemented)";
         case parser::CommandType::UNKNOWN:
         default:
             return "ERROR: Unknown or unsupported command.";
@@ -66,6 +72,9 @@ int main() {
         // Convert the C-style string to std::string for easier handling in C++.
         // readline allocates memory, so we make a copy.
         std::string input_line(line_read_c);
+
+        // todo: handle multiple commands in a single line (e.g., "DROP TABLE idk; DROP TABLE idk2")
+        //  That would also help simplify the parser layer to not worry about semicolon handling.
 
         // Add the line to history *if* it's not empty and not an exit command.
         if (!input_line.empty() && input_line != "exit" && input_line != "quit") {

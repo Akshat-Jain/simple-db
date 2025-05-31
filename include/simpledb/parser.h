@@ -16,6 +16,8 @@ namespace parser {
 
     std::optional<command::CreateTableCommand> parse_create_table(const std::string& query);
 
+    std::optional<command::DropTableCommand> parse_drop_table(const std::string& query);
+
     std::optional<command::InsertCommand> parse_insert(const std::string& query);
 }  // namespace parser
 
