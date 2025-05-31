@@ -24,7 +24,7 @@ class ExecutorTestBase : public ::testing::Test {
                         (std::string("simpledb_tests_") + test_info->test_suite_name() + "_" + test_info->name());
 
         if (std::filesystem::exists(test_data_dir)) {
-            std::filesystem::remove(test_data_dir);
+            std::filesystem::remove_all(test_data_dir);
         }
         std::filesystem::create_directories(test_data_dir);
         expected_catalog_json_path = test_data_dir / "catalog.json";
@@ -71,6 +71,19 @@ class ExecutorTestBase : public ::testing::Test {
 
 class ExecutorCreateTableTest : public ExecutorTestBase {
     void SetUp() override { ExecutorTestBase::SetUp(); }
+    void TearDown() override { ExecutorTestBase::TearDown(); }
+};
+
+class ExecutorDropTableTest : public ExecutorTestBase {
+    void SetUp() override {
+        ExecutorTestBase::SetUp();
+        // Create a sample table to test drop functionality
+        command::CreateTableCommand cmd;
+        cmd.table_name = "test_table";
+        cmd.column_definitions.push_back({"id", command::Datatype::INT});
+        cmd.column_definitions.push_back({"name", command::Datatype::TEXT});
+        executor::execute_create_table_command(cmd, test_data_dir);
+    }
     void TearDown() override { ExecutorTestBase::TearDown(); }
 };
 
@@ -142,4 +155,49 @@ TEST_F(ExecutorCreateTableTest, DuplicateTableName) {
     // Verify the data file for the first table was created and still exists
     std::filesystem::path data_file_path = test_data_dir / "duplicate_table_name.data";
     ASSERT_TRUE(std::filesystem::exists(data_file_path));
+}
+
+TEST_F(ExecutorDropTableTest, SuccessfulDropTable) {
+    command::DropTableCommand cmd = {"test_table"};
+
+    // Before the DROP TABLE command, validate that the table related stuff exists.
+    ASSERT_TRUE(catalog::table_exists(cmd.table_name));
+    auto loaded_catalog = loadCatalogFromDisk();
+    ASSERT_EQ(1, loaded_catalog->size());
+    ASSERT_TRUE(std::filesystem::exists(test_data_dir / "test_table.data"));
+
+    // Drop the table
+    std::string result = executor::execute_drop_table_command(cmd, test_data_dir);
+    ASSERT_EQ(result, "OK (Table 'test_table' dropped successfully)");
+    ASSERT_FALSE(catalog::table_exists(cmd.table_name));
+
+    // Validate the state after dropping the table
+    loaded_catalog = loadCatalogFromDisk();
+    ASSERT_TRUE(loaded_catalog.has_value());
+    ASSERT_EQ(0, loaded_catalog->size());
+    AssertCatalogDataEqual(catalog::get_all_schemas(), loaded_catalog.value());
+    ASSERT_FALSE(std::filesystem::exists(test_data_dir / "test_table.data"));
+}
+
+TEST_F(ExecutorDropTableTest, DropNonExistentTable) {
+    // Get state before DROP TABLE
+    const std::vector<catalog::TableSchema>& expected_catalog_state_before_drop = catalog::get_all_schemas();
+
+    // Attempt to drop a non-existent table
+    command::DropTableCommand cmd = {"non_existent_table"};
+    std::string result = executor::execute_drop_table_command(cmd, test_data_dir);
+    ASSERT_EQ(result, "ERROR: Table 'non_existent_table' does not exist.");
+
+    // Verify on-disk catalog is unchanged
+    auto on_disk_catalog_opt = loadCatalogFromDisk();
+    ASSERT_TRUE(on_disk_catalog_opt.has_value());
+    AssertCatalogDataEqual(expected_catalog_state_before_drop, *on_disk_catalog_opt);
+
+    // Verify that the in-memory catalog is consistent with the catalog.json on disk.
+    auto loaded_catalog = loadCatalogFromDisk();
+    ASSERT_TRUE(loaded_catalog.has_value());
+    AssertCatalogDataEqual(catalog::get_all_schemas(), loaded_catalog.value());
+
+    // Verify the data file for "test_table" still exists
+    ASSERT_TRUE(std::filesystem::exists(test_data_dir / "test_table.data"));
 }
