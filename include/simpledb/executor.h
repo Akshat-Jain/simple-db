@@ -8,13 +8,9 @@
 #include <string>
 #include "simpledb/command.h"
 #include "simpledb/catalog.h"
+#include "simpledb/result.h"
 
 namespace executor {
-    // Using alias for the result type of execution.
-    // For now, it's a string message, but it could become a more complex struct later
-    // (e.g., to include status codes, row counts, or actual data for SELECT).
-    using ExecutionResult = std::string;
-
     /**
      * @brief Executes a Create Table command.
      *
@@ -31,11 +27,11 @@ namespace executor {
      * @param table_data_dir The directory where table data files will be stored (e.g., "data/").
      * @return ExecutionResult A string indicating success or failure.
      */
-    ExecutionResult execute_create_table_command(const command::CreateTableCommand& cmd,
-                                                 const std::filesystem::path& table_data_dir);
+    results::ExecutionResult execute_create_table_command(const command::CreateTableCommand& cmd,
+                                                          const std::filesystem::path& table_data_dir);
 
-    ExecutionResult execute_drop_table_command(const command::DropTableCommand& cmd,
-                                               const std::filesystem::path& table_data_dir);
+    results::ExecutionResult execute_drop_table_command(const command::DropTableCommand& cmd,
+                                                        const std::filesystem::path& table_data_dir);
 }  // namespace executor
 
 #endif  // SIMPLE_DB_EXECUTOR_H

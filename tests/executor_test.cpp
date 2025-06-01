@@ -93,10 +93,10 @@ TEST_F(ExecutorCreateTableTest, SuccessfulCreateTable) {
     cmd.column_definitions.push_back({"id", command::Datatype::INT});
     cmd.column_definitions.push_back({"name", command::Datatype::TEXT});
 
-    std::string result = executor::execute_create_table_command(cmd, test_data_dir);
+    results::ExecutionResult result = executor::execute_create_table_command(cmd, test_data_dir);
 
     // Check the result
-    ASSERT_EQ(result, "OK (Table 'test_table' created successfully)");
+    ASSERT_EQ(result.get_message(), "OK (Table 'test_table' created successfully)");
 
     // Verify the in-memory catalog was updated
     const auto& in_memory_catalog_after_create = catalog::get_all_schemas();
@@ -125,8 +125,8 @@ TEST_F(ExecutorCreateTableTest, DuplicateTableName) {
     cmd1.column_definitions.push_back({"id", command::Datatype::INT});
     cmd1.column_definitions.push_back({"name", command::Datatype::TEXT});
 
-    std::string result1 = executor::execute_create_table_command(cmd1, test_data_dir);
-    ASSERT_EQ(result1, "OK (Table 'duplicate_table_name' created successfully)");
+    results::ExecutionResult result1 = executor::execute_create_table_command(cmd1, test_data_dir);
+    ASSERT_EQ(result1.get_message(), "OK (Table 'duplicate_table_name' created successfully)");
 
     // Now try to create a table with the same name
     command::CreateTableCommand cmd2;
@@ -134,10 +134,10 @@ TEST_F(ExecutorCreateTableTest, DuplicateTableName) {
     cmd2.column_definitions.push_back({"id", command::Datatype::INT});
     cmd2.column_definitions.push_back({"description", command::Datatype::TEXT});
 
-    std::string result2 = executor::execute_create_table_command(cmd2, test_data_dir);
+    results::ExecutionResult result2 = executor::execute_create_table_command(cmd2, test_data_dir);
 
     // Check the result
-    ASSERT_EQ(result2, "ERROR: Table duplicate_table_name already exists.");
+    ASSERT_EQ(result2.get_message(), "ERROR: Table duplicate_table_name already exists.");
 
     // Verify the in-memory catalog was not updated
     const auto& in_memory_catalog = catalog::get_all_schemas();
@@ -167,8 +167,8 @@ TEST_F(ExecutorDropTableTest, SuccessfulDropTable) {
     ASSERT_TRUE(std::filesystem::exists(test_data_dir / "test_table.data"));
 
     // Drop the table
-    std::string result = executor::execute_drop_table_command(cmd, test_data_dir);
-    ASSERT_EQ(result, "OK (Table 'test_table' dropped successfully)");
+    results::ExecutionResult result = executor::execute_drop_table_command(cmd, test_data_dir);
+    ASSERT_EQ(result.get_message(), "OK (Table 'test_table' dropped successfully)");
     ASSERT_FALSE(catalog::table_exists(cmd.table_name));
 
     // Validate the state after dropping the table
@@ -185,8 +185,8 @@ TEST_F(ExecutorDropTableTest, DropNonExistentTable) {
 
     // Attempt to drop a non-existent table
     command::DropTableCommand cmd = {"non_existent_table"};
-    std::string result = executor::execute_drop_table_command(cmd, test_data_dir);
-    ASSERT_EQ(result, "ERROR: Table 'non_existent_table' does not exist.");
+    results::ExecutionResult result = executor::execute_drop_table_command(cmd, test_data_dir);
+    ASSERT_EQ(result.get_message(), "ERROR: Table 'non_existent_table' does not exist.");
 
     // Verify on-disk catalog is unchanged
     auto on_disk_catalog_opt = loadCatalogFromDisk();

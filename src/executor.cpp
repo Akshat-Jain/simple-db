@@ -7,11 +7,11 @@
 #include "simpledb/config.h"
 
 namespace executor {
-    ExecutionResult execute_create_table_command(const command::CreateTableCommand& cmd,
-                                                 const std::filesystem::path& table_data_dir) {
+    results::ExecutionResult execute_create_table_command(const command::CreateTableCommand& cmd,
+                                                          const std::filesystem::path& table_data_dir) {
         if (catalog::table_exists(cmd.table_name)) {
             logging::log.error("Table '{}' already exists in the catalog.", cmd.table_name);
-            return "ERROR: Table " + cmd.table_name + " already exists.";
+            return results::ExecutionResult::Error("ERROR: Table " + cmd.table_name + " already exists.");
         }
 
         catalog::TableSchema table_schema = {cmd.table_name, cmd.column_definitions};
@@ -46,7 +46,7 @@ namespace executor {
                               table_data_path.string());
 
             // If all steps succeeded
-            return "OK (Table '" + table_schema.table_name + "' created successfully)";
+            return results::ExecutionResult::Ok("OK (Table '" + table_schema.table_name + "' created successfully)");
         } catch (const std::exception& e) {
             logging::log.error("Error occurred while creating table '{}': {}", cmd.table_name, e.what());
 
@@ -65,15 +65,15 @@ namespace executor {
                 logging::log.info("Removed data file for table: {}", cmd.table_name);
             }
 
-            return "ERROR: " + std::string(e.what()) + " Table creation aborted.";
+            return results::ExecutionResult::Error("ERROR: " + std::string(e.what()) + " Table creation aborted.");
         }
     }
 
-    ExecutionResult execute_drop_table_command(const command::DropTableCommand& cmd,
-                                               const std::filesystem::path& table_data_dir) {
+    results::ExecutionResult execute_drop_table_command(const command::DropTableCommand& cmd,
+                                                        const std::filesystem::path& table_data_dir) {
         std::string table_name = cmd.table_name;
         if (!catalog::table_exists(table_name)) {
-            return "ERROR: Table '" + table_name + "' does not exist.";
+            return results::ExecutionResult::Error("ERROR: Table '" + table_name + "' does not exist.");
         }
         logging::log.info("Attempting to drop table '{}'", table_name);
         std::filesystem::path table_data_path = table_data_dir / (table_name + ".data");
@@ -96,7 +96,7 @@ namespace executor {
                 logging::log.warn(
                     "Data file for table '{}' does not exist at {}", table_name, table_data_path.string());
             }
-            return "OK (Table '" + table_name + "' dropped successfully)";
+            return results::ExecutionResult::Ok("OK (Table '" + table_name + "' dropped successfully)");
         } catch (const std::exception& e) {
             if (catalog_successfully_updated) {
                 logging::log.error(
@@ -107,7 +107,8 @@ namespace executor {
                     e.what());
             }
 
-            return "ERROR: DROP TABLE failed for table '" + table_name + "'. Reason: " + e.what();
+            return results::ExecutionResult::Error("ERROR: DROP TABLE failed for table '" + table_name +
+                                                   "'. Reason: " + e.what());
         }
     }
 }  // namespace executor

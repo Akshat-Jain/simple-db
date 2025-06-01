@@ -13,13 +13,13 @@
 #include "simpledb/catalog.h"
 #include "simpledb/executor.h"
 
-std::string parse_and_execute(const std::string& query) {
+results::ExecutionResult parse_and_execute(const std::string& query) {
     parser::CommandType command_type = parser::get_command_type(query);
     switch (command_type) {
         case parser::CommandType::CREATE_TABLE: {
             std::optional<command::CreateTableCommand> cmd = parser::parse_create_table(query);
             if (!cmd) {
-                return "ERROR: Failed to parse CREATE TABLE command.";
+                return results::ExecutionResult::Error("ERROR: Failed to parse CREATE TABLE command.");
             }
             logging::log.info("Parsed CREATE TABLE command successfully for table: {}", cmd->table_name);
             return executor::execute_create_table_command(cmd.value(), config::get_config().data_dir);
@@ -27,18 +27,18 @@ std::string parse_and_execute(const std::string& query) {
         case parser::CommandType::DROP_TABLE: {
             std::optional<command::DropTableCommand> cmd = parser::parse_drop_table(query);
             if (!cmd) {
-                return "ERROR: Failed to parse DROP TABLE command.";
+                return results::ExecutionResult::Error("ERROR: Failed to parse DROP TABLE command.");
             }
             logging::log.info("Parsed DROP TABLE command successfully for table: {}", cmd->table_name);
             return executor::execute_drop_table_command(cmd.value(), config::get_config().data_dir);
         }
         case parser::CommandType::INSERT:
-            return "OK (Placeholder - INSERT not yet implemented)";
+            return results::ExecutionResult::Ok("OK (Placeholder - INSERT not yet implemented)");
         case parser::CommandType::SELECT:
-            return "OK (Placeholder - SELECT not yet implemented)";
+            return results::ExecutionResult::Ok("OK (Placeholder - SELECT not yet implemented)");
         case parser::CommandType::UNKNOWN:
         default:
-            return "ERROR: Unknown or unsupported command.";
+            return results::ExecutionResult::Error("ERROR: Unknown or unsupported command.");
     }
 }
 
@@ -95,8 +95,11 @@ int main() {
             continue;
         }
 
-        std::string result = parse_and_execute(input_line);
-        std::cout << result << std::endl;
+        results::ExecutionResult result = parse_and_execute(input_line);
+
+        if (result.get_message().has_value()) {
+            std::cout << result.get_message().value() << std::endl;
+        }
     }
 
     return 0;
