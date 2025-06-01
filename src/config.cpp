@@ -45,7 +45,7 @@ namespace config {
     }
 
     const Config& get_config() {
-        if (initialized) {
+        if (!initialized) {
             init_config();
         }
         return config;
