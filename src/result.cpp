@@ -2,9 +2,8 @@
 // Created by Akshat Jain on 01/06/25.
 //
 
-#include <utility>
-
 #include "simpledb/result.h"
+#include <stdexcept>
 
 namespace results {
     ExecutionResult::ExecutionResult(ResultStatus status,
