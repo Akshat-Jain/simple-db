@@ -26,10 +26,10 @@ namespace results {
         static ExecutionResult SuccessWithData(ResultSet data, std::optional<std::string> msg = std::nullopt);
 
         // --- Const Accessor Methods (Declarations, can be defined inline if simple) ---
-        ResultStatus get_status() const;                        // Declaration
+        ResultStatus get_status() const;                 // Declaration
         std::optional<std::string> get_message() const;  // Declaration
-        bool has_data() const;                                  // Declaration
-        const ResultSet& get_data() const;                      // Declaration
+        bool has_data() const;                           // Declaration
+        const ResultSet& get_data() const;               // Declaration
 
        private:
         ExecutionResult(ResultStatus status, std::optional<std::string> message, std::optional<ResultSet> data);
