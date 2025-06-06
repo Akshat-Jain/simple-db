@@ -92,6 +92,14 @@ int main() {
         free(line_read_c);
         line_read_c = nullptr;  // Good practice to null dangling pointers
 
+        // Handle meta commands in the REPL loop instead of parser layer.
+        // This is done to keep the door open for having meta commands that are not necessarily SQL commands.
+        // For example, we can have a meta command to show the current database or configuration settings.
+        // Or meta commands like \timing on/off, or \c <database_name> to change the current database.
+        if (input_line == "\\dt") {
+            input_line = "SHOW TABLES";
+        }
+
         if (input_line == "exit" || input_line == "quit") {
             std::cout << "Exiting." << std::endl;
             break;
