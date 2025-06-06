@@ -111,4 +111,15 @@ namespace executor {
                                                    "'. Reason: " + e.what());
         }
     }
+
+    results::ExecutionResult execute_show_tables_command() {
+        const std::vector<catalog::TableSchema>& table_schemas = catalog::get_all_schemas();
+        std::vector<std::string> headers = {"Table Name"};
+        std::vector<results::Row> data;
+        for (const auto& schema : table_schemas) {
+            data.push_back({schema.table_name});
+        }
+        results::ResultSet result_set{headers, data};
+        return results::ExecutionResult::SuccessWithData(result_set, std::nullopt);
+    }
 }  // namespace executor

@@ -12,3 +12,4 @@ Other handy things:
 Todo:
 1. Rename include guards from COMMAND_H to SIMPLEDB_COMMAND_H, to avoid conflicts with other libraries if they also have COMMAND_H.
 2. Update application.log filepath to also use ENV_DATA_DIR.
+3. Parser layer should pass the error message to main.cpp for printing. Parsing layer shouldn't print those messages itself.

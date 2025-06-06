@@ -49,6 +49,15 @@ namespace parser {
             if (maybe_table == "TABLE") {
                 return CommandType::DROP_TABLE;
             }
+        } else if (command == "SHOW") {
+            std::string maybe_tables;
+            ss >> maybe_tables;
+            for (char &c : maybe_tables) {
+                c = static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
+            }
+            if (maybe_tables == "TABLES") {
+                return CommandType::SHOW_TABLES;
+            }
         } else if (command == "INSERT") {
             // Check for "INTO" next
             std::string maybe_into;
@@ -233,6 +242,38 @@ namespace parser {
         }
 
         logging::log.debug("Parsed DROP TABLE command for table: {}", command.table_name);
+        return command;
+    }
+
+    std::optional<command::ShowTablesCommand> parse_show_tables(const std::string &query) {
+        logging::log.debug("Query is: {}", query);
+        std::string trimmed_query = stringutils::trim(query);
+        logging::log.debug("Query after trimming is: {}", trimmed_query);
+
+        command::ShowTablesCommand command;
+
+        std::stringstream ss(trimmed_query);
+        std::string token;
+
+        // 1. The first word should be SHOW
+        if (!(ss >> token) || stringutils::to_upper(token) != "SHOW") {
+            std::cerr << "ERROR: Expected SHOW keyword." << std::endl;
+            return std::nullopt;
+        }
+
+        // 2. The second word should be TABLES
+        if (!(ss >> token) || stringutils::to_upper(token) != "TABLES") {
+            std::cerr << "ERROR: Expected TABLES keyword." << std::endl;
+            return std::nullopt;
+        }
+
+        // 3. The stream shouldn't have any more tokens after the table name.
+        if (ss >> token) {
+            std::cerr << "ERROR: Invalid SHOW TABLES command. Found extra tokens: '" << token << "'." << std::endl;
+            return std::nullopt;
+        }
+
+        logging::log.debug("Parsed SHOW TABLES command successfully.");
         return command;
     }
 

@@ -32,6 +32,8 @@ namespace command {
         std::string table_name;
         std::vector<std::string> values;  // Assumption: The values match column order/type
     };
+
+    struct ShowTablesCommand {};
 }  // namespace command
 
 #endif  // COMMAND_H

@@ -32,6 +32,13 @@ results::ExecutionResult parse_and_execute(const std::string& query) {
             logging::log.info("Parsed DROP TABLE command successfully for table: {}", cmd->table_name);
             return executor::execute_drop_table_command(cmd.value(), config::get_config().data_dir);
         }
+        case parser::CommandType::SHOW_TABLES: {
+            std::optional<command::ShowTablesCommand> cmd = parser::parse_show_tables(query);
+            if (!cmd) {
+                return results::ExecutionResult::Error("ERROR: Failed to parse SHOW TABLES command.");
+            }
+            return executor::execute_show_tables_command();
+        }
         case parser::CommandType::INSERT:
             return results::ExecutionResult::Ok("OK (Placeholder - INSERT not yet implemented)");
         case parser::CommandType::SELECT:
@@ -99,6 +106,20 @@ int main() {
 
         if (result.get_message().has_value()) {
             std::cout << result.get_message().value() << std::endl;
+        }
+        if (result.has_data()) {
+            // todo: Handle the data in a more structured way, maybe with a table format.
+            const results::ResultSet& result_set = result.get_data();
+            for (const auto& item : result_set.headers) {
+                std::cout << item << "\t";
+            }
+            std::cout << std::endl;
+            for (const auto& row : result_set.rows) {
+                for (const auto& col : row) {
+                    std::cout << col << "\t";
+                }
+                std::cout << std::endl;
+            }
         }
     }
 
