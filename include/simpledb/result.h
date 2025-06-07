@@ -5,6 +5,7 @@
 #ifndef SIMPLE_DB_RESULT_H
 #define SIMPLE_DB_RESULT_H
 
+#include <iostream>
 #include <optional>
 #include <string>
 #include <vector>
@@ -17,6 +18,38 @@ namespace results {
         std::vector<std::string> headers;
         std::vector<Row> rows;
     };
+
+    inline bool operator==(const ResultSet& lhs, const ResultSet& rhs) {
+        return lhs.headers == rhs.headers && lhs.rows == rhs.rows;
+    }
+
+    inline std::ostream& operator<<(std::ostream& os, const ResultSet& rs) {
+        os << "ResultSet(";
+        os << "Headers: [";
+        for (size_t i = 0; i < rs.headers.size(); i++) {
+            os << rs.headers[i];
+            if (i < rs.headers.size() - 1) {
+                os << ", ";
+            }
+        }
+        os << "], ";
+        os << "Rows: [";
+        for (size_t i = 0; i < rs.rows.size(); i++) {
+            os << "[";
+            for (size_t j = 0; j < rs.rows[i].size(); j++) {
+                os << rs.rows[i][j];
+                if (j < rs.rows[i].size() - 1) {
+                    os << ", ";
+                }
+            }
+            os << "]";
+            if (i < rs.rows.size() - 1) {
+                os << ", ";
+            }
+        }
+        os << "])";
+        return os;
+    }
 
     class ExecutionResult {
        public:

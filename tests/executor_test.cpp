@@ -221,17 +221,11 @@ TEST_F(ExecutorShowTablesTest, SuccessfulShowTables) {
     ASSERT_EQ(result.get_status(), results::ResultStatus::SUCCESS);
     ASSERT_TRUE(result.has_data());
 
-    // 2. Get the result set (as a const reference).
-    const results::ResultSet& result_set = result.get_data();
-
-    // 3. Assert the structure of the result set.
-    ASSERT_EQ(result_set.headers.size(), 1);
-    ASSERT_EQ(result_set.headers[0], "Table Name");  // Or whatever you decided in the executor.
-    ASSERT_EQ(result_set.rows.size(), 1);
-
-    // 4. Assert the content of the result set.
-    ASSERT_EQ(result_set.rows[0].size(), 1);
-    ASSERT_EQ(result_set.rows[0][0], "test_table");
+    // 2. Assert the result data.
+    results::ResultSet expected_result_data;
+    expected_result_data.headers = {"Table Name"};
+    expected_result_data.rows = {{"test_table"}};
+    ASSERT_EQ(expected_result_data, result.get_data());
 }
 
 TEST_F(ExecutorTestBase, SuccessfulShowTablesWhenNoTablesExist) {
@@ -241,11 +235,9 @@ TEST_F(ExecutorTestBase, SuccessfulShowTablesWhenNoTablesExist) {
     ASSERT_EQ(result.get_status(), results::ResultStatus::SUCCESS);
     ASSERT_TRUE(result.has_data());
 
-    // 2. Get the result set (as a const reference).
-    const results::ResultSet& result_set = result.get_data();
-
-    // 3. Assert the structure of the result set.
-    ASSERT_EQ(result_set.headers.size(), 1);
-    ASSERT_EQ(result_set.headers[0], "Table Name");
-    ASSERT_EQ(result_set.rows.size(), 0);  // No tables should be present
+    // 2. Assert the result data is empty.
+    results::ResultSet expected_result_data;
+    expected_result_data.headers = {"Table Name"};
+    expected_result_data.rows = {};  // No tables exist
+    ASSERT_EQ(expected_result_data, result.get_data());
 }
