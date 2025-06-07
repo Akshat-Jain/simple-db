@@ -57,10 +57,8 @@ TEST(CreateTable, BasicCreateTable) {
     std::string query = "CREATE TABLE my_table (id INT, name TEXT)";
     auto parse_result = parser::parse_create_table(query);
     ASSERT_TRUE(parse_result);
-    ASSERT_TRUE(parse_result.command.has_value());
 
     std::optional<command::CreateTableCommand> table_command = parse_result.command;
-    ASSERT_TRUE(table_command.has_value());
     ASSERT_EQ("my_table", table_command->table_name);
     ASSERT_EQ(2, table_command->column_definitions.size());
     ASSERT_EQ("id", table_command->column_definitions[0].column_name);
@@ -73,10 +71,8 @@ TEST(CreateTable, ExtraWhitespace) {
     std::string query = "   CREATE    TABLE   my_table   (   id   INT  , name    TEXT )   ";
     auto parse_result = parser::parse_create_table(query);
     ASSERT_TRUE(parse_result);
-    ASSERT_TRUE(parse_result.command.has_value());
 
     std::optional<command::CreateTableCommand> table_command = parse_result.command;
-    ASSERT_TRUE(table_command.has_value());
     ASSERT_EQ("my_table", table_command->table_name);
     ASSERT_EQ(2, table_command->column_definitions.size());
     ASSERT_EQ("id", table_command->column_definitions[0].column_name);
@@ -86,104 +82,108 @@ TEST(CreateTable, ExtraWhitespace) {
 }
 
 TEST(CreateTable, MissingCreateKeyword) {
-    std::string query = "TABLE my_table (id INT)";
-    ASSERT_FALSE(parser::parse_create_table(query));
+    auto result = parser::parse_create_table("my_table (id INT)");
+    ASSERT_FALSE(result);
+    ASSERT_EQ("ERROR: Expected CREATE keyword.", result.error_message);
 }
 
 TEST(CreateTable, MissingTableKeyword) {
-    std::string query = "CREATE my_table (id INT)";
-    ASSERT_FALSE(parser::parse_create_table(query));
+    auto result = parser::parse_create_table("CREATE my_table (id INT)");
+    ASSERT_FALSE(result);
+    ASSERT_EQ("ERROR: Expected TABLE keyword.", result.error_message);
 }
 
 TEST(CreateTable, NoTableName) {
-    std::string query = "CREATE TABLE (id INT)";
-    ASSERT_FALSE(parser::parse_create_table(query));
+    auto result = parser::parse_create_table("CREATE TABLE (id INT)");
+    ASSERT_FALSE(result);
+    ASSERT_EQ("ERROR: Table name is empty.", result.error_message);
 }
 
 TEST(CreateTable, InvalidTableNameCharacters) {
-    std::string query = "CREATE TABLE my-table (id INT)";
-    ASSERT_FALSE(parser::parse_create_table(query));
+    auto result = parser::parse_create_table("CREATE TABLE my-table (id INT)");
+    ASSERT_FALSE(result);
+    ASSERT_EQ("ERROR: Table name 'my-table' contains invalid characters.", result.error_message);
 }
 
 TEST(CreateTable, UnknownColumnType) {
-    std::string query = "CREATE TABLE my_table (id SOME_RANDOM_TYPE)";
-    ASSERT_FALSE(parser::parse_create_table(query));
+    auto result = parser::parse_create_table("CREATE TABLE my_table (id SOME_RANDOM_TYPE)");
+    ASSERT_FALSE(result);
+    ASSERT_EQ("ERROR: Unknown column type 'SOME_RANDOM_TYPE'. Supported types are INT and TEXT.", result.error_message);
 }
 
 TEST(CreateTable, ExtraTokensInColumnDefinition) {
-    std::string query = "CREATE TABLE my_table (id INT something)";
-    ASSERT_FALSE(parser::parse_create_table(query));
+    auto result = parser::parse_create_table("CREATE TABLE my_table (id INT something)");
+    ASSERT_FALSE(result);
+    ASSERT_EQ("ERROR: Extra tokens after column type in column definition: [id INT something].", result.error_message);
 }
 
 TEST(DropTable, BasicDropTable) {
     auto parse_result = parser::parse_drop_table("DROP TABLE my_table");
     ASSERT_TRUE(parse_result);
-    ASSERT_TRUE(parse_result.command.has_value());
 
     std::optional<command::DropTableCommand> cmd = parse_result.command;
-    ASSERT_TRUE(cmd.has_value());
     ASSERT_EQ("my_table", cmd->table_name);
 }
 
 TEST(DropTable, ExtraWhitespace) {
     auto parse_result = parser::parse_drop_table("   DROP   TABLE   my_table   ");
     ASSERT_TRUE(parse_result);
-    ASSERT_TRUE(parse_result.command.has_value());
 
     std::optional<command::DropTableCommand> cmd = parse_result.command;
-    ASSERT_TRUE(cmd.has_value());
     ASSERT_EQ("my_table", cmd->table_name);
 }
 
 TEST(DropTable, MissingDropKeyword) {
-    std::string query = "TABLE my_table";
-    ASSERT_FALSE(parser::parse_drop_table(query));
+    auto result = parser::parse_drop_table("TABLE my_table");
+    ASSERT_FALSE(result);
+    ASSERT_EQ("ERROR: Expected DROP keyword.", result.error_message);
 }
 
 TEST(DropTable, MissingTableKeyword) {
-    std::string query = "DROP my_table";
-    ASSERT_FALSE(parser::parse_drop_table(query));
+    auto result = parser::parse_drop_table("DROP my_table");
+    ASSERT_FALSE(result);
+    ASSERT_EQ("ERROR: Expected TABLE keyword.", result.error_message);
 }
 
 TEST(DropTable, NoTableName) {
-    std::string query = "DROP TABLE";
-    ASSERT_FALSE(parser::parse_drop_table(query));
+    auto result = parser::parse_drop_table("DROP TABLE");
+    ASSERT_FALSE(result);
+    ASSERT_EQ("ERROR: Table name is empty.", result.error_message);
 }
 
 TEST(DropTable, InvalidTableNameCharacters) {
-    std::string query = "DROP TABLE my-table";
-    ASSERT_FALSE(parser::parse_drop_table(query));
+    auto result = parser::parse_drop_table("DROP TABLE my-table");
+    ASSERT_FALSE(result);
+    ASSERT_EQ("ERROR: Table name 'my-table' contains invalid characters.", result.error_message);
 }
 
 TEST(DropTable, ExtraTokens) {
-    std::string query = "DROP TABLE my_table extra_token";
-    ASSERT_FALSE(parser::parse_drop_table(query));
+    auto parse_result = parser::parse_drop_table("DROP TABLE my_table extra_token");
+    ASSERT_FALSE(parse_result);
+    ASSERT_EQ(
+        "ERROR: Invalid DROP TABLE command. Parsed table name as 'my_table', but found extra tokens after it: "
+        "'extra_token'.",
+        parse_result.error_message);
 }
 
 TEST(ShowTables, BasicShowTables) {
     auto parse_result = parser::parse_show_tables("SHOW TABLES");
     ASSERT_TRUE(parse_result);
-    ASSERT_TRUE(parse_result.command.has_value());
-
-    std::optional<command::ShowTablesCommand> cmd = parse_result.command;
-    ASSERT_TRUE(cmd.has_value());
 }
 
 TEST(ShowTables, ExtraWhitespace) {
     auto parse_result = parser::parse_show_tables("   SHOW   TABLES   ");
     ASSERT_TRUE(parse_result);
-    ASSERT_TRUE(parse_result.command.has_value());
-
-    std::optional<command::ShowTablesCommand> cmd = parse_result.command;
-    ASSERT_TRUE(cmd.has_value());
 }
 
 TEST(ShowTables, MissingTablesKeyword) {
-    std::string query = "SHOW";
-    ASSERT_FALSE(parser::parse_show_tables(query));
+    auto parse_result = parser::parse_show_tables("SHOW");
+    ASSERT_FALSE(parse_result);
+    ASSERT_EQ("ERROR: Expected TABLES keyword.", parse_result.error_message);
 }
 
 TEST(ShowTables, ExtraTokens) {
-    std::string query = "SHOW TABLES extra_token";
-    ASSERT_FALSE(parser::parse_show_tables(query));
+    auto parse_result = parser::parse_show_tables("SHOW TABLES extra_token");
+    ASSERT_FALSE(parse_result);
+    ASSERT_EQ("ERROR: Invalid SHOW TABLES command. Found extra tokens: 'extra_token'.", parse_result.error_message);
 }
