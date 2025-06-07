@@ -17,25 +17,23 @@ results::ExecutionResult parse_and_execute(const std::string& query) {
     parser::CommandType command_type = parser::get_command_type(query);
     switch (command_type) {
         case parser::CommandType::CREATE_TABLE: {
-            std::optional<command::CreateTableCommand> cmd = parser::parse_create_table(query);
-            if (!cmd) {
-                return results::ExecutionResult::Error("ERROR: Failed to parse CREATE TABLE command.");
+            auto parse_result = parser::parse_create_table(query);
+            if (!parse_result) {
+                return results::ExecutionResult::Error(*parse_result.error_message);
             }
-            logging::log.info("Parsed CREATE TABLE command successfully for table: {}", cmd->table_name);
-            return executor::execute_create_table_command(cmd.value(), config::get_config().data_dir);
+            return executor::execute_create_table_command(*parse_result.command, config::get_config().data_dir);
         }
         case parser::CommandType::DROP_TABLE: {
-            std::optional<command::DropTableCommand> cmd = parser::parse_drop_table(query);
-            if (!cmd) {
-                return results::ExecutionResult::Error("ERROR: Failed to parse DROP TABLE command.");
+            auto parse_result = parser::parse_drop_table(query);
+            if (!parse_result) {
+                return results::ExecutionResult::Error(*parse_result.error_message);
             }
-            logging::log.info("Parsed DROP TABLE command successfully for table: {}", cmd->table_name);
-            return executor::execute_drop_table_command(cmd.value(), config::get_config().data_dir);
+            return executor::execute_drop_table_command(*parse_result.command, config::get_config().data_dir);
         }
         case parser::CommandType::SHOW_TABLES: {
-            std::optional<command::ShowTablesCommand> cmd = parser::parse_show_tables(query);
-            if (!cmd) {
-                return results::ExecutionResult::Error("ERROR: Failed to parse SHOW TABLES command.");
+            auto parse_result = parser::parse_show_tables(query);
+            if (!parse_result) {
+                return results::ExecutionResult::Error(*parse_result.error_message);
             }
             return executor::execute_show_tables_command();
         }

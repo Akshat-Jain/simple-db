@@ -11,4 +11,3 @@ Other handy things:
 
 Todo:
 1. Update application.log filepath to also use ENV_DATA_DIR.
-2. Parser layer should pass the error message to main.cpp for printing. Parsing layer shouldn't print those messages itself.
