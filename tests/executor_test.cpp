@@ -87,6 +87,19 @@ class ExecutorDropTableTest : public ExecutorTestBase {
     void TearDown() override { ExecutorTestBase::TearDown(); }
 };
 
+class ExecutorShowTablesTest : public ExecutorTestBase {
+    void SetUp() override {
+        ExecutorTestBase::SetUp();
+        // Create a sample table to test show functionality
+        command::CreateTableCommand cmd;
+        cmd.table_name = "test_table";
+        cmd.column_definitions.push_back({"id", command::Datatype::INT});
+        cmd.column_definitions.push_back({"name", command::Datatype::TEXT});
+        executor::execute_create_table_command(cmd, test_data_dir);
+    }
+    void TearDown() override { ExecutorTestBase::TearDown(); }
+};
+
 TEST_F(ExecutorCreateTableTest, SuccessfulCreateTable) {
     command::CreateTableCommand cmd;
     cmd.table_name = "test_table";
@@ -200,4 +213,39 @@ TEST_F(ExecutorDropTableTest, DropNonExistentTable) {
 
     // Verify the data file for "test_table" still exists
     ASSERT_TRUE(std::filesystem::exists(test_data_dir / "test_table.data"));
+}
+
+TEST_F(ExecutorShowTablesTest, SuccessfulShowTables) {
+    results::ExecutionResult result = executor::execute_show_tables_command();
+    // 1. Assert that the execution was successful and returned data.
+    ASSERT_EQ(result.get_status(), results::ResultStatus::SUCCESS);
+    ASSERT_TRUE(result.has_data());
+
+    // 2. Get the result set (as a const reference).
+    const results::ResultSet& result_set = result.get_data();
+
+    // 3. Assert the structure of the result set.
+    ASSERT_EQ(result_set.headers.size(), 1);
+    ASSERT_EQ(result_set.headers[0], "Table Name");  // Or whatever you decided in the executor.
+    ASSERT_EQ(result_set.rows.size(), 1);
+
+    // 4. Assert the content of the result set.
+    ASSERT_EQ(result_set.rows[0].size(), 1);
+    ASSERT_EQ(result_set.rows[0][0], "test_table");
+}
+
+TEST_F(ExecutorTestBase, SuccessfulShowTablesWhenNoTablesExist) {
+    results::ExecutionResult result = executor::execute_show_tables_command();
+
+    // 1. Assert that the execution was successful and returned data.
+    ASSERT_EQ(result.get_status(), results::ResultStatus::SUCCESS);
+    ASSERT_TRUE(result.has_data());
+
+    // 2. Get the result set (as a const reference).
+    const results::ResultSet& result_set = result.get_data();
+
+    // 3. Assert the structure of the result set.
+    ASSERT_EQ(result_set.headers.size(), 1);
+    ASSERT_EQ(result_set.headers[0], "Table Name");
+    ASSERT_EQ(result_set.rows.size(), 0);  // No tables should be present
 }

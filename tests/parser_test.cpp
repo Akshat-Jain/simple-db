@@ -9,6 +9,7 @@ TEST(Parser, GetCommandType) {
     ASSERT_EQ(parser::get_command_type("INSERT INTO my_table VALUES (1, 'Alice')"), parser::CommandType::INSERT);
     ASSERT_EQ(parser::get_command_type("SELECT * FROM my_table"), parser::CommandType::SELECT);
     ASSERT_EQ(parser::get_command_type("DROP TABLE my_table"), parser::CommandType::DROP_TABLE);
+    ASSERT_EQ(parser::get_command_type("SHOW TABLES"), parser::CommandType::SHOW_TABLES);
     ASSERT_EQ(parser::get_command_type("UNKNOWN COMMAND"), parser::CommandType::UNKNOWN);
 }
 
@@ -17,6 +18,7 @@ TEST(Parser, GetCommandTypeCaseInsensitive) {
     ASSERT_EQ(parser::get_command_type("insert into my_table VALUES (1, 'Alice')"), parser::CommandType::INSERT);
     ASSERT_EQ(parser::get_command_type("select * from my_table"), parser::CommandType::SELECT);
     ASSERT_EQ(parser::get_command_type("drop table my_table"), parser::CommandType::DROP_TABLE);
+    ASSERT_EQ(parser::get_command_type("show tables"), parser::CommandType::SHOW_TABLES);
 }
 
 TEST(Parser, GetCommandTypeHandlesWhitespace) {
@@ -24,6 +26,7 @@ TEST(Parser, GetCommandTypeHandlesWhitespace) {
     ASSERT_EQ(parser::get_command_type("INSERT INTO t VALUES (1)  "), parser::CommandType::INSERT);
     ASSERT_EQ(parser::get_command_type("SELECT   *   FROM    t"), parser::CommandType::SELECT);
     ASSERT_EQ(parser::get_command_type("\tDROP\tTABLE\tt"), parser::CommandType::DROP_TABLE);
+    ASSERT_EQ(parser::get_command_type("   SHOW   TABLES   "), parser::CommandType::SHOW_TABLES);
 }
 
 TEST(Parser, GetCommandTypeHandlesPartialOrIncorrectKeywords) {
@@ -37,7 +40,7 @@ TEST(Parser, GetCommandTypeHandlesPartialOrIncorrectKeywords) {
     ASSERT_EQ(parser::get_command_type("DROP mytable"), parser::CommandType::UNKNOWN);
     ASSERT_EQ(parser::get_command_type("DROP"), parser::CommandType::UNKNOWN);  // DROP alone
 
-    // SELECT doesn't have a mandatory second keyword for get_command_type, so "SELECT" alone is fine.
+    ASSERT_EQ(parser::get_command_type("SHOW"), parser::CommandType::UNKNOWN);  // SHOW alone
 }
 
 TEST(Parser, GetCommandTypeHandlesCompletelyUnknownAndEmpty) {
@@ -149,4 +152,29 @@ TEST(DropTable, InvalidTableNameCharacters) {
 TEST(DropTable, ExtraTokens) {
     std::optional<command::DropTableCommand> cmd = parser::parse_drop_table("DROP TABLE my_table extra_token");
     ASSERT_FALSE(cmd.has_value());
+}
+
+TEST(ShowTables, BasicShowTables) {
+    std::optional<command::ShowTablesCommand> cmd = parser::parse_show_tables("SHOW TABLES");
+    ASSERT_TRUE(cmd.has_value());
+}
+
+TEST(ShowTables, ExtraWhitespace) {
+    std::optional<command::ShowTablesCommand> cmd = parser::parse_show_tables("   SHOW   TABLES   ");
+    ASSERT_TRUE(cmd.has_value());
+}
+
+TEST(ShowTables, MissingTablesKeyword) {
+    std::optional<command::ShowTablesCommand> cmd = parser::parse_show_tables("SHOW");
+    ASSERT_FALSE(cmd.has_value());
+}
+
+TEST(ShowTables, ExtraTokens) {
+    std::optional<command::ShowTablesCommand> cmd = parser::parse_show_tables("SHOW TABLES extra_token");
+    ASSERT_FALSE(cmd.has_value());
+}
+
+TEST(ShowTables, CaseInsensitive) {
+    std::optional<command::ShowTablesCommand> cmd = parser::parse_show_tables("show tables");
+    ASSERT_TRUE(cmd.has_value());
 }
