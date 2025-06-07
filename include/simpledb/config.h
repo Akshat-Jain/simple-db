@@ -2,8 +2,8 @@
 // Created by Akshat Jain on 19/04/25.
 //
 
-#ifndef CONFIG_H
-#define CONFIG_H
+#ifndef SIMPLEDB_CONFIG_H
+#define SIMPLEDB_CONFIG_H
 #include <ostream>
 #include <filesystem>
 
@@ -21,4 +21,4 @@ namespace config {
     const Config &get_config();
 }  // namespace config
 
-#endif  // CONFIG_H
+#endif  // SIMPLEDB_CONFIG_H

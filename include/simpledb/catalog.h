@@ -2,8 +2,8 @@
 // Created by Akshat Jain on 24/05/25.
 //
 
-#ifndef CATALOG_H
-#define CATALOG_H
+#ifndef SIMPLEDB_CATALOG_H
+#define SIMPLEDB_CATALOG_H
 #include <filesystem>
 #include <optional>
 #include <string>
@@ -72,4 +72,4 @@ namespace catalog {
      */
     const std::vector<TableSchema>& get_all_schemas();
 }  // namespace catalog
-#endif  // CATALOG_H
+#endif  // SIMPLEDB_CATALOG_H

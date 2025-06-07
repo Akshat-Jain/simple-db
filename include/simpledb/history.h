@@ -2,8 +2,8 @@
 // Created by Akshat Jain on 22/05/25.
 //
 
-#ifndef HISTORY_H
-#define HISTORY_H
+#ifndef SIMPLEDB_HISTORY_H
+#define SIMPLEDB_HISTORY_H
 
 namespace history {
     // Initialize the readline history subsystem.
@@ -14,4 +14,4 @@ namespace history {
     void save();
 }  // namespace history
 
-#endif  // HISTORY_H
+#endif  // SIMPLEDB_HISTORY_H

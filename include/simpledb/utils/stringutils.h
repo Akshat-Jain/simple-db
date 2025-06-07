@@ -2,8 +2,8 @@
 // Created by Akshat Jain on 20/04/25.
 //
 
-#ifndef STRINGUTILS_H
-#define STRINGUTILS_H
+#ifndef SIMPLEDB_STRINGUTILS_H
+#define SIMPLEDB_STRINGUTILS_H
 
 #include <string>
 
@@ -32,4 +32,4 @@ namespace stringutils {  // Group utility functions
 
 }  // namespace stringutils
 
-#endif  // STRINGUTILS_H
+#endif  // SIMPLEDB_STRINGUTILS_H

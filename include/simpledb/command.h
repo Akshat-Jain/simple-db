@@ -2,8 +2,8 @@
 // Created by Akshat Jain on 20/04/25.
 //
 
-#ifndef COMMAND_H
-#define COMMAND_H
+#ifndef SIMPLEDB_COMMAND_H
+#define SIMPLEDB_COMMAND_H
 #include <string>
 #include <vector>
 #include "nlohmann/json.hpp"
@@ -36,4 +36,4 @@ namespace command {
     struct ShowTablesCommand {};
 }  // namespace command
 
-#endif  // COMMAND_H
+#endif  // SIMPLEDB_COMMAND_H

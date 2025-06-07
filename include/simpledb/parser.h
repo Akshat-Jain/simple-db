@@ -2,8 +2,8 @@
 // Created by Akshat Jain on 20/04/25.
 //
 
-#ifndef PARSER_H
-#define PARSER_H
+#ifndef SIMPLEDB_PARSER_H
+#define SIMPLEDB_PARSER_H
 #include <optional>
 
 #include "command.h"
@@ -23,4 +23,4 @@ namespace parser {
     std::optional<command::InsertCommand> parse_insert(const std::string& query);
 }  // namespace parser
 
-#endif  // PARSER_H
+#endif  // SIMPLEDB_PARSER_H

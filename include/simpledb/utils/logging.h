@@ -2,8 +2,8 @@
 // Created by Akshat Jain on 20/04/25.
 //
 
-#ifndef LOGGING_H
-#define LOGGING_H
+#ifndef SIMPLEDB_LOGGING_H
+#define SIMPLEDB_LOGGING_H
 
 #include <memory>
 #include <spdlog/spdlog.h>
@@ -56,4 +56,4 @@ namespace logging {
 
 }  // namespace logging
 
-#endif  // LOGGING_H
+#endif  // SIMPLEDB_LOGGING_H
