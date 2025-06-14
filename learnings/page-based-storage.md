@@ -17,7 +17,7 @@ To manage variable-length records within a fixed-size page, we use a classic **S
 |  Page Header  | Slot 1 | Slot 2 | ... |      Free Space      | Record 2 | Record 1 |
 +---------------+-----------------+-...-+----------------------+---------------------+
 ^               ^                 ^     ^                      ^                     ^
-0             HeaderEnd         SlotEnd FreeSpaceStart       Record2Start          4095
+0             HeaderEnd         SlotEnd FreeSpaceStart       RecordHeapStart        4095
 ```
 
 The page is organized into three main sections that grow towards each other:
