@@ -9,28 +9,28 @@
 
 namespace simpledb::storage {
 
-    uint8_t Page::GetVersion() const { return data_[VERSION_OFFSET]; }
+    uint8_t Page::GetVersion() const { return data_[Page::VERSION_OFFSET]; }
 
-    void Page::SetVersion(uint8_t version) { data_[VERSION_OFFSET] = version; }
+    void Page::SetVersion(uint8_t version) { data_[Page::VERSION_OFFSET] = version; }
 
     uint16_t Page::GetNumRecords() const {
         uint16_t num_records;
-        memcpy(&num_records, &data_[NUM_RECORDS_OFFSET], sizeof(uint16_t));
+        memcpy(&num_records, &data_[Page::NUM_RECORDS_OFFSET], sizeof(uint16_t));
         return num_records;
     }
 
     void Page::SetNumRecords(uint16_t num_records) {
-        memcpy(&data_[NUM_RECORDS_OFFSET], &num_records, sizeof(uint16_t));
+        memcpy(&data_[Page::NUM_RECORDS_OFFSET], &num_records, sizeof(uint16_t));
     }
 
     uint16_t Page::GetFreeSpacePointer() const {
         uint16_t free_space_ptr;
-        memcpy(&free_space_ptr, &data_[FREE_SPACE_PTR_OFFSET], sizeof(uint16_t));
+        memcpy(&free_space_ptr, &data_[Page::FREE_SPACE_PTR_OFFSET], sizeof(uint16_t));
         return free_space_ptr;
     }
 
     void Page::SetFreeSpacePointer(uint16_t free_space_ptr) {
-        memcpy(&data_[FREE_SPACE_PTR_OFFSET], &free_space_ptr, sizeof(uint16_t));
+        memcpy(&data_[Page::FREE_SPACE_PTR_OFFSET], &free_space_ptr, sizeof(uint16_t));
     }
 
     Page::Slot Page::GetSlot(uint16_t slot_number) const {

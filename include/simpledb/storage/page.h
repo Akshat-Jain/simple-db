@@ -6,7 +6,8 @@
 #define SIMPLEDB_STORAGE_PAGE_H
 
 #include <array>
-#include <cstdint>
+#include <cstddef>
+#include <vector>
 
 namespace simpledb::storage {
     /*
