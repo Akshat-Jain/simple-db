@@ -82,6 +82,27 @@ namespace simpledb::storage {
          */
         std::vector<char> GetRecord(const Slot& slot) const;
 
+        /**
+         * @brief Returns a const pointer to the page's raw data.
+         *
+         * This version is for read-only access to the page data. It is called
+         * on const Page objects.
+         *
+         * @return A const char* pointer to the start of the data array.
+         */
+        const char* GetData() const;
+
+        /**
+         * @brief Returns a pointer to the page's raw data.
+         *
+         * This version is for write access to the page data. It is called
+         * on non-const Page objects, allowing the caller to modify the
+         * page's contents (e.g., by reading from a file into the buffer).
+         *
+         * @return A char* pointer to the start of the data array.
+         */
+        char* GetData();
+
        private:
         std::array<char, PAGE_SIZE> data_;  // Data stored in the page
     };

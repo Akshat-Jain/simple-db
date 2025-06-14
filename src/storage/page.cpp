@@ -94,4 +94,8 @@ namespace simpledb::storage {
         return record_data;
     }
 
+    const char* Page::GetData() const { return data_.data(); }
+
+    char* Page::GetData() { return data_.data(); }
+
 }  // namespace simpledb::storage
