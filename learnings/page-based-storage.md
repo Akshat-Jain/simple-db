@@ -73,6 +73,8 @@ The responsibility for correctly ordering the columns during serialization (for 
 #### Q: Is this "slotted page" model a standard?
 **A:** Yes, it's a classic and fundamental database design pattern, heavily inspired by academic work and used in various forms by major databases.
 *   **PostgreSQL:** Uses a nearly identical model with a page header, an array of "line pointers" (their name for slots), and record data called "tuples".
+      * https://github.com/postgres/postgres/blob/master/src/include/storage/bufpage.h
+      * https://github.com/postgres/postgres/blob/master/src/backend/storage/page/bufpage.c
 *   **Oracle:** Also employs a very similar slotted page architecture.
 *   **MySQL (InnoDB) & SQLite:** Use a more specialized version of this model within their B-Tree leaf pages, where the data is stored.
 By implementing this, we are building a simplified but authentic version of a real database storage page.
