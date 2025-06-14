@@ -75,6 +75,11 @@ namespace simpledb::storage {
 
         bool AddRecord(const std::vector<char>& record_data);
 
+        /**
+         * Retrieves the data of a record using its slot information.
+         */
+        std::vector<char> GetRecord(const Slot& slot) const;
+
        private:
         std::array<char, PAGE_SIZE> data_;  // Data stored in the page
     };

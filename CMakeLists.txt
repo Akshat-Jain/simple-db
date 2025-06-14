@@ -110,6 +110,7 @@ target_link_libraries(
 add_executable(run_tests
         tests/parser_test.cpp
         tests/catalog_test.cpp
+        tests/page_test.cpp
         # Add other tests/*.cpp files here
 
         # Include source files needed by the tests that aren't part of a library yet

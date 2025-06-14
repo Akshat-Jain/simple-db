@@ -88,4 +88,10 @@ namespace simpledb::storage {
         return true;
     }
 
+    std::vector<char> Page::GetRecord(const Slot& slot) const {
+        std::vector<char> record_data(slot.record_length);
+        memcpy(record_data.data(), &data_[slot.record_offset], slot.record_length);
+        return record_data;
+    }
+
 }  // namespace simpledb::storage
