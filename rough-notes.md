@@ -2,6 +2,86 @@
 
 This is a dump of my thoughts when exploring different alternatives for xyz stuff.
 
+### `INSERT INTO` Feature Implementation Plan
+
+#### **Phase 1: Foundational Storage Layer (`page.h`, `page.cpp`)**
+
+This phase is about creating the building blocks for storing data.
+
+*   **1.1. Define Page Constants and Structures (`page.h`)**
+  *   [ ] Create `include/simpledb/page.h`.
+  *   [ ] Define `PAGE_SIZE` constant (e.g., `4096`).
+  *   [ ] Define the `Page` struct holding the raw byte array (e.g., `std::array<char, PAGE_SIZE>`).
+  *   [ ] Define the `Slot` struct (`record_offset`, `record_length`).
+
+*   **1.2. Implement Page Header API (`page.h` / `page.cpp`)**
+  *   [ ] Create a `Page` class or a set of free functions to manage the page header.
+  *   [ ] Implement getters/setters for header fields: `get_version`, `get_num_records`, `set_num_records`, `get_free_space_ptr`, `set_free_space_ptr`. These will read/write integers from the raw byte array.
+  *   [ ] Implement a `Page::initialize()` method to format a new, empty page (set header fields to default values).
+
+*   **1.3. Implement Page Record Management API (`page.h` / `page.cpp`)**
+  *   [ ] Implement `Page::get_slot(slot_num)` to retrieve a `Slot` from the slot array.
+  *   [ ] Implement `Page::add_record(const std::vector<char>& record_data)`:
+    *   Calculates if there's enough free space for the record and a new slot.
+    *   If yes, copies the data into the page's heap, adds a new slot, updates the header, and returns `true`.
+    *   If no, returns `false`.
+  *   [ ] Implement `Page::get_record(slot_num)` which uses a slot to find and return the binary data for a specific record.
+
+#### **Phase 2: Table-Level Storage (`table_heap.h`, `table_heap.cpp`)**
+
+This phase manages the collection of pages for a single table.
+
+*   **2.1. Define `TableHeap` Class (`table_heap.h`)**
+  *   [ ] Create `include/simpledb/table_heap.h`.
+  *   [ ] The class will manage a table's `.data` file. Its constructor will take a file path.
+  *   [ ] Declare the main method: `bool insert_record(const std::vector<char>& record_data);`.
+
+*   **2.2. Implement `TableHeap` Logic (`table_heap.cpp`)**
+  *   [ ] Implement the `insert_record` method following the logic we designed:
+    *   Open the table's `.data` file.
+    *   If the file is empty, create a new page (Page 0), add the record to it, and write it to the file.
+    *   If the file is not empty, seek to the last page, read it into memory.
+    *   Try to add the record to this page using `Page::add_record`.
+    *   If it succeeds, write the modified page back to its original location.
+    *   If it fails (page is full), create a new page, add the record to it, and append the new page to the end of the file.
+
+#### **Phase 3: Integration with Parser and Executor**
+
+This phase connects the new storage layer to the existing command processing pipeline.
+
+*   **3.1. Implement Parser for `INSERT` (`parser.cpp`)**
+  *   [ ] Fully implement `parse_insert` to extract the table name and a `vector<string>` of values.
+  *   [ ] Handle syntax like `INSERT INTO table_name VALUES ('val1', 2, 'val3');`. This will require careful string parsing to handle parentheses, commas, and quotes.
+
+*   **3.2. Implement Row Serialization (`executor.cpp` or a new utility)**
+  *   [ ] Create a `serialize_row(const std::vector<std::string>& values)` function that implements the `[len][data]` binary format we designed.
+
+*   **3.3. Update Executor for `INSERT` (`executor.cpp`)**
+  *   [ ] In `execute_insert_command`:
+    *   Get the table schema from the catalog.
+    *   Validate that the number of values from the parsed command matches the number of columns in the schema.
+    *   Call `serialize_row` to get the binary record data.
+    *   Create a `TableHeap` instance for the table.
+    *   Call `table_heap.insert_record` with the serialized data.
+    *   Return a success or failure `ExecutionResult`.
+
+#### **Phase 4: Testing**
+
+*   **4.1. Test the `Page` class (`page_test.cpp`)**
+  *   [ ] Create a new test file.
+  *   [ ] Test that `Page::initialize` works correctly.
+  *   [ ] Test that `Page::add_record` correctly adds a record and updates the header.
+  *   [ ] Test that it correctly reports failure when the page is full.
+  *   [ ] Test that `get_record` retrieves the correct data after insertion.
+
+*   **4.2. Test the `TableHeap` class (`table_heap_test.cpp`)**
+  *   [ ] Test that inserting into an empty file creates a new file with one page.
+  *   [ ] Test that inserting multiple records fills up the first page and then correctly creates a second page.
+
+*   **4.3. Test the `INSERT` command (`parser_test.cpp`, `executor_test.cpp`)**
+  *   [ ] Add tests to `parser_test.cpp` for valid and invalid `INSERT` syntax.
+  *   [ ] Add an end-to-end test in `executor_test.cpp` that simulates running an `INSERT` command and verifies that the underlying `.data` file is modified correctly. (This might require a helper function to read and interpret the file for test verification).
+
 ## Next main todo: Implementing INSERT INTO command
 
 Page-based approach.
