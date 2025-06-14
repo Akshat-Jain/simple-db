@@ -19,7 +19,9 @@ namespace simpledb::storage {
         return num_records;
     }
 
-    void Page::SetNumRecords(uint16_t num_records) { memcpy(&data_[NUM_RECORDS_OFFSET], &num_records, sizeof(uint16_t)); }
+    void Page::SetNumRecords(uint16_t num_records) {
+        memcpy(&data_[NUM_RECORDS_OFFSET], &num_records, sizeof(uint16_t));
+    }
 
     uint16_t Page::GetFreeSpacePointer() const {
         uint16_t free_space_ptr;
@@ -86,4 +88,4 @@ namespace simpledb::storage {
         return true;
     }
 
-}
+}  // namespace simpledb::storage
