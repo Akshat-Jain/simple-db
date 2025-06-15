@@ -10,6 +10,8 @@
 #include <string>
 #include <vector>
 
+#include "simpledb/storage/page.h"
+
 namespace simpledb::storage {
 
     // A PageId is a unique identifier for a page in the storage system.

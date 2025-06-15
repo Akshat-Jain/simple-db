@@ -30,7 +30,8 @@ namespace command {
 
     struct InsertCommand {
         std::string table_name;
-        std::vector<std::string> values;  // Assumption: The values match column order/type
+        std::vector<std::string> columns;  // This would be empty if the user does not specify columns.
+        std::vector<std::string> values;
     };
 
     struct ShowTablesCommand {};

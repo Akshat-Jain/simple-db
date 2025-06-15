@@ -3,8 +3,10 @@
 //
 
 #include "simpledb/executor.h"
-#include "simpledb/utils/logging.h"
+
 #include "simpledb/config.h"
+#include "simpledb/storage/table_heap.h"
+#include "simpledb/utils/logging.h"
 
 namespace executor {
     results::ExecutionResult execute_create_table_command(const command::CreateTableCommand& cmd,
@@ -121,5 +123,96 @@ namespace executor {
         }
         results::ResultSet result_set{headers, data};
         return results::ExecutionResult::SuccessWithData(result_set, std::nullopt);
+    }
+
+    results::ExecutionResult execute_insert_command(const command::InsertCommand& cmd,
+                                                    const std::filesystem::path& table_data_dir) {
+        std::optional<catalog::TableSchema> table_schema = catalog::get_table_schema(cmd.table_name);
+        if (!table_schema.has_value()) {
+            return results::ExecutionResult::Error("ERROR: Table '" + cmd.table_name + "' does not exist.");
+        }
+        logging::log.info("Inserting data into table '{}'", cmd.table_name);
+        std::filesystem::path table_data_path = table_data_dir / (cmd.table_name + ".data");
+
+        // INSERT INTO can be of 2 types:
+        // 1. INSERT INTO table_name VALUES (val1, val2, ...);
+        // 2. INSERT INTO table_name (col1, col2, ...) VALUES (val1, val2, ...);
+        // todo: We don't handle multiple rows in a single INSERT command yet.
+
+        std::vector<std::string> ordered_values;
+
+        if (cmd.columns.empty()) {
+            // Type 1: INSERT INTO table_name VALUES (val1, val2, ...);
+            if (cmd.values.size() != table_schema->column_definitions.size()) {
+                return results::ExecutionResult::Error(
+                    "ERROR: Number of values does not match number of columns in table '" + cmd.table_name + "'.");
+            }
+            ordered_values = cmd.values;  // Use values directly as they are in order
+        } else {
+            // Type 2: INSERT INTO table_name (col1, col2, ...) VALUES (val1, val2, ...);
+            if (cmd.columns.size() != cmd.values.size()) {
+                return results::ExecutionResult::Error(
+                    "ERROR: Number of columns does not match number of values in INSERT command for table '" +
+                    cmd.table_name + "'.");
+            }
+
+            // Validate that the provided columns exist in the table schema
+            std::unordered_map<std::string, size_t> column_index_map;
+            for (size_t i = 0; i < table_schema->column_definitions.size(); ++i) {
+                column_index_map[table_schema->column_definitions[i].column_name] = i;
+            }
+
+            ordered_values.resize(table_schema->column_definitions.size(), "");
+            for (size_t i = 0; i < cmd.columns.size(); ++i) {
+                const auto& col = cmd.columns[i];
+                if (column_index_map.find(col) == column_index_map.end()) {
+                    return results::ExecutionResult::Error("ERROR: Column '" + col + "' does not exist in table '" +
+                                                           cmd.table_name + "'.");
+                }
+                ordered_values[column_index_map[col]] = cmd.values[i];
+            }
+        }
+
+        // Validate the values against the table schema
+        for (size_t i = 0; i < ordered_values.size(); ++i) {
+            const auto& col_def = table_schema->column_definitions[i];
+            if (col_def.type == command::Datatype::INT) {
+                try {
+                    std::stoi(ordered_values[i]);  // Check if it can be converted to int
+                } catch (const std::invalid_argument&) {
+                    return results::ExecutionResult::Error("ERROR: Value '" + ordered_values[i] + "' for column '" +
+                                                           col_def.column_name + "' is not a valid integer.");
+                }
+            } else if (col_def.type == command::Datatype::TEXT) {
+                // No specific validation for TEXT, but we could add length checks or other constraints later
+            } else {
+                return results::ExecutionResult::Error("ERROR: Unknown data type for column '" + col_def.column_name +
+                                                       "'.");
+            }
+        }
+
+        // Serialize the ordered values into a vector<char> format
+        // We will use a format [length of value][value][length of value][value]...
+        std::vector<char> record_data;
+        for (const auto& value : ordered_values) {
+            // First, we need to store the length of the value as a 16-bit unsigned integer
+            uint16_t length = static_cast<uint16_t>(value.size());
+            // Create a pointer to the length and reinterpret it as a char array
+            const char* len_ptr = reinterpret_cast<const char*>(&length);
+            // Insert the length as a 2-byte value
+            record_data.insert(record_data.end(), len_ptr, len_ptr + sizeof(uint16_t));
+            // Now insert the actual value
+            record_data.insert(record_data.end(), value.begin(), value.end());
+        }
+
+        // Insert the record into the table heap.
+        simpledb::storage::TableHeap table_heap(table_data_path.string());
+        if (table_heap.InsertRecord(record_data)) {
+            return results::ExecutionResult::Ok("1 row inserted.");
+        } else {
+            // If it fails (e.g., record too big), return an error.
+            return results::ExecutionResult::Error(
+                "ERROR: Failed to insert row. The record may be too large for a page.");
+        }
     }
 }  // namespace executor

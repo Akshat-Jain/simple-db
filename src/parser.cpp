@@ -5,10 +5,75 @@
 #include "simpledb/parser.h"
 
 #include <iostream>
+#include <set>
 #include <sstream>
 
 #include "simpledb/utils/logging.h"
 #include "simpledb/utils/stringutils.h"
+
+namespace {  // Anonymous namespace to keep helper functions private to this translation unit
+    parser::ParseResult<std::vector<std::string>> parse_parenthesized_list(const std::string &input, size_t &pos) {
+        while (pos < input.length() && std::isspace(input[pos])) {
+            pos++;
+        }
+
+        if (pos >= input.length() || input[pos] != '(') {
+            return {std::nullopt, "ERROR: Expected '(' to start list."};
+        }
+        pos++;  // Consume '('
+
+        std::vector<std::string> items;
+        std::string current_item;
+        bool in_string_literal = false;
+
+        while (pos < input.length()) {
+            char current_char = input[pos];
+
+            if (in_string_literal) {
+                if (current_char == '\'') {
+                    // Check for escaped single quote ('')
+                    if (pos + 1 < input.length() && input[pos + 1] == '\'') {
+                        current_item += '\'';  // Add one quote to the item
+                        pos++;                 // Skip the second quote
+                    } else {
+                        in_string_literal = false;
+                    }
+                }
+                current_item += current_char;
+            } else {  // Not in a string literal
+                switch (current_char) {
+                    case '\'':
+                        in_string_literal = true;
+                        current_item += current_char;
+                        break;
+
+                    case ',':
+                        items.push_back(stringutils::trim(current_item));
+                        current_item.clear();
+                        break;
+
+                    case ')':
+                        // Push the last item before finishing.
+                        if (!current_item.empty() || items.empty()) {
+                            items.push_back(stringutils::trim(current_item));
+                        }
+                        pos++;                         // Consume ')'
+                        return {items, std::nullopt};  // Success
+
+                    default:
+                        // Ignore whitespace between items
+                        if (!std::isspace(current_char)) {
+                            current_item += current_char;
+                        }
+                        break;
+                }
+            }
+            pos++;
+        }
+
+        return {std::nullopt, "ERROR: Unmatched opening parenthesis in list."};
+    }
+}  // anonymous namespace
 
 namespace parser {
 
@@ -259,6 +324,99 @@ namespace parser {
     }
 
     ParseResult<command::InsertCommand> parse_insert([[maybe_unused]] const std::string &query) {
-        return {std::nullopt, "ERROR: INSERT command parsing is not yet implemented. Please try another command."};
+        // INSERT INTO table_name (col1, col2, ...) VALUES (val1, val2, ...);
+        // INSERT INTO table_name VALUES (val1, val2, ...);
+        // Both of the above forms are valid.
+
+        logging::log.debug("Query is: {}", query);
+        std::string trimmed_query = stringutils::trim(query);
+        logging::log.debug("Query after trimming is: {}", trimmed_query);
+
+        command::InsertCommand command;
+
+        std::stringstream ss(trimmed_query);
+        std::string token;
+        // 1. The first word should be INSERT
+        if (!(ss >> token) || stringutils::to_upper(token) != "INSERT") {
+            return {std::nullopt, "ERROR: Expected INSERT keyword."};
+        }
+        // 2. The second word should be INTO
+        if (!(ss >> token) || stringutils::to_upper(token) != "INTO") {
+            return {std::nullopt, "ERROR: Expected INTO keyword."};
+        }
+        // 3. The third word should be the table name
+        if (!(ss >> command.table_name) || command.table_name.empty()) {
+            return {std::nullopt, "ERROR: Expected table name after INTO keyword."};
+        }
+        // Check if table_name is a valid identifier (alphanumeric and underscores)
+        if (!stringutils::is_alpha_num_underscore(command.table_name)) {
+            return {std::nullopt, "ERROR: Table name '" + command.table_name + "' contains invalid characters."};
+        }
+
+        // 4. After the table name, we need to find either a '(' for columns or "VALUES".
+        // Let's get the remainder of the string to work with.
+        std::string remainder;
+        std::getline(ss, remainder);  // Read the rest of the line into remainder
+
+        size_t pos = 0;
+        // Skip any leading whitespace in the remainder.
+        while (pos < remainder.length() && std::isspace(remainder[pos])) {
+            pos++;
+        }
+
+        if (pos >= remainder.length()) {
+            return {std::nullopt, "ERROR: Incomplete INSERT statement. Expected columns list or 'VALUES'."};
+        }
+
+        // 5. Check for the optional column list
+        if (remainder[pos] == '(') {
+            auto columns_result = parse_parenthesized_list(remainder, pos);
+            if (!columns_result) {
+                return {std::nullopt, *columns_result.error_message};
+            }
+            command.columns = *columns_result.command;
+
+            // Check if any column has been supplied more than once
+            std::set<std::string> unique_columns(command.columns.begin(), command.columns.end());
+            if (unique_columns.size() != command.columns.size()) {
+                return {std::nullopt, "ERROR: Duplicate column names found in the column list."};
+            }
+
+            // After parsing columns, we need to skip more whitespace.
+            while (pos < remainder.length() && std::isspace(remainder[pos])) {
+                pos++;
+            }
+        }
+
+        // 6. The next token MUST be "VALUES". We can check this by finding the keyword at our current position.
+        std::string values_keyword = "VALUES";
+        if (pos + values_keyword.length() > remainder.length() ||
+            stringutils::to_upper(remainder.substr(pos, values_keyword.length())) != values_keyword) {
+            return {std::nullopt, "ERROR: Expected 'VALUES' keyword."};
+        }
+        pos += values_keyword.length();  // Advance past "VALUES"
+
+        // 7. The next part MUST be the values list.
+        auto values_result = parse_parenthesized_list(remainder, pos);
+        if (!values_result) {
+            return {std::nullopt, *values_result.error_message};
+        }
+        command.values = *values_result.command;
+
+        // 8. Check for any trailing tokens.
+        while (pos < remainder.length() && std::isspace(remainder[pos])) {
+            pos++;
+        }
+        if (pos < remainder.length()) {
+            return {std::nullopt, "ERROR: Unexpected tokens after values list: '" + remainder.substr(pos) + "'."};
+        }
+
+        // 9. Final validation
+        if (!command.columns.empty() && command.columns.size() != command.values.size()) {
+            return {std::nullopt, "ERROR: Column count does not match value count."};
+        }
+
+        // 10. Phew! If we reach here, we have a valid INSERT command.
+        return {command, std::nullopt};
     }
 }  // namespace parser

@@ -37,8 +37,13 @@ results::ExecutionResult parse_and_execute(const std::string& query) {
             }
             return executor::execute_show_tables_command();
         }
-        case parser::CommandType::INSERT:
-            return results::ExecutionResult::Ok("OK (Placeholder - INSERT not yet implemented)");
+        case parser::CommandType::INSERT: {
+            auto parse_result = parser::parse_insert(query);
+            if (!parse_result) {
+                return results::ExecutionResult::Error(*parse_result.error_message);
+            }
+            return executor::execute_insert_command(*parse_result.command, config::get_config().data_dir);
+        }
         case parser::CommandType::SELECT:
             return results::ExecutionResult::Ok("OK (Placeholder - SELECT not yet implemented)");
         case parser::CommandType::UNKNOWN:

@@ -33,6 +33,9 @@ namespace executor {
     results::ExecutionResult execute_drop_table_command(const command::DropTableCommand& cmd,
                                                         const std::filesystem::path& table_data_dir);
 
+    results::ExecutionResult execute_insert_command(const command::InsertCommand& cmd,
+                                                    const std::filesystem::path& table_data_dir);
+
     results::ExecutionResult execute_show_tables_command();
 }  // namespace executor
 
