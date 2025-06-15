@@ -16,7 +16,7 @@ class TableHeapTest : public ::testing::Test {
     void SetUp() override {
         // Create a unique temporary file path for each test.
         const ::testing::TestInfo* const test_info = ::testing::UnitTest::GetInstance()->current_test_info();
-        test_file_path = std::filesystem::temp_directory_path().string() + "simpledb_table_heap_" +
+        test_file_path = std::filesystem::temp_directory_path().string() + "/simpledb_table_heap_" +
                          test_info->test_suite_name() + "_" + test_info->name() + ".data";
     }
 
