@@ -7,15 +7,15 @@ This is a simple database written in C++. I've read a lot of theory about databa
 2. The secondary goal is to learn C++ and its ecosystem, including CMake, Google Test, and other tools. I'm also actively trying to use best practices, and also taking inspiration from other popular C++ projects in that regard.
 3. The final goal is to eventually one day someday hopefully rename it to complicated-db 🤣
 
-**Note:**
-1. This project isn't inspired by any specific database or book.
-2. I am actively using Gemini 2.5 Pro as a learning companion to brainstorm on different approaches for achieving some xyz thing, or to get help with C++ syntax and concepts here and there, etc.
-3. I don't have an "end state" for the database, or a specific set of features I want to implement. I'm taking it one step at a time, and see what all features and components I can add to it along the way. With that said, I actively try to brainstorm with Gemini 2.5 Pro to try and make sure that the code structure would hopefully allow future extensibility, but I guess only future Akshat can tell how that'll turn out.
-
 **Current state:**
 1. CREATE TABLE, DROP TABLE, SHOW TABLES commands work
 2. INSERT INTO command works, albeit with the limitation that it doesn't support inserting multiple rows at once (yet).
 3. I'm working on implementing the SELECT command currently.
+
+**Note:**
+1. This project isn't inspired by any specific database or book.
+2. I am actively using Gemini 2.5 Pro as a learning companion to brainstorm on different approaches for achieving some xyz thing, or to get help with C++ syntax and concepts here and there, etc. With that said, I actively try to ensure that it doesn't just spoon-feed me the entire thing as that'll just defeat the whole purpose of this project.
+3. I don't have an "end state" for the database, or a specific set of features I want to implement. I'm taking it one step at a time, and see what all features and components I can add to it along the way. With that said, I actively try to brainstorm with Gemini 2.5 Pro to try and make sure that the code structure would hopefully allow future extensibility, but I guess only future Akshat can tell how that'll turn out.
 
 ## How to build and run
 
