@@ -4,6 +4,8 @@
 
 #include "simpledb/executor.h"
 #include "simpledb/catalog.h"
+#include "simpledb/storage/page.h"
+#include "simpledb/storage/table_heap.h"
 
 #include <gtest/gtest.h>
 #include <fstream>
@@ -98,6 +100,61 @@ class ExecutorShowTablesTest : public ExecutorTestBase {
         executor::execute_create_table_command(cmd, test_data_dir);
     }
     void TearDown() override { ExecutorTestBase::TearDown(); }
+};
+
+class ExecutorInsertTablesTest : public ExecutorTestBase {
+    void SetUp() override {
+        ExecutorTestBase::SetUp();
+        // Create a sample table to test show functionality
+        command::CreateTableCommand cmd;
+        cmd.table_name = "test_table";
+        cmd.column_definitions.push_back({"id", command::Datatype::INT});
+        cmd.column_definitions.push_back({"name", command::Datatype::TEXT});
+        executor::execute_create_table_command(cmd, test_data_dir);
+    }
+    void TearDown() override { ExecutorTestBase::TearDown(); }
+
+   protected:
+    void AssertRecordForSlot(simpledb::storage::PageId page_id,
+                             uint16_t slot_num,
+                             const std::vector<std::string>& expected_values) {
+        // 1. Read the file into a buffer
+        std::filesystem::path data_file_path = test_data_dir / "test_table.data";
+        std::ifstream file(data_file_path, std::ios::binary);
+
+        // 2. Seek and read the page
+        file.seekg(static_cast<size_t>(page_id) * simpledb::storage::PAGE_SIZE);
+        simpledb::storage::Page page;
+        file.read(page.GetData(), simpledb::storage::PAGE_SIZE);
+        file.close();
+
+        // 3. Get the slot and record
+        ASSERT_LT(slot_num, page.GetNumRecords()) << "Slot number is out of bounds.";
+        auto slot = page.GetSlot(slot_num);
+        std::vector<char> record_blob = page.GetRecord(slot);
+
+        // 4. Deserialize and assert
+        std::vector<std::string> actual_values = deserialize_row(record_blob);
+        ASSERT_EQ(expected_values, actual_values);
+    }
+
+   private:
+    static std::vector<std::string> deserialize_row(const std::vector<char>& blob) {
+        std::vector<std::string> values;
+        size_t pos = 0;
+        while (pos < blob.size()) {
+            // 1. Read the 2-byte length prefix.
+            uint16_t len;
+            memcpy(&len, &blob[pos], sizeof(uint16_t));
+            pos += sizeof(uint16_t);
+
+            // 2. Read the string data of that length.
+            std::string value(blob.begin() + pos, blob.begin() + pos + len);
+            values.push_back(value);
+            pos += len;
+        }
+        return values;
+    }
 };
 
 TEST_F(ExecutorCreateTableTest, SuccessfulCreateTable) {
@@ -240,4 +297,93 @@ TEST_F(ExecutorTestBase, SuccessfulShowTablesWhenNoTablesExist) {
     expected_result_data.headers = {"Table Name"};
     expected_result_data.rows = {};  // No tables exist
     ASSERT_EQ(expected_result_data, result.get_data());
+}
+
+TEST_F(ExecutorInsertTablesTest, SuccessfulInsertIntoTable) {
+    command::InsertCommand cmd;
+    cmd.table_name = "test_table";
+    cmd.values = {"1", "Alice"};
+
+    results::ExecutionResult result = executor::execute_insert_command(cmd, test_data_dir);
+    ASSERT_EQ(result.get_message(), "1 row inserted.");
+    AssertRecordForSlot(0, 0, std::vector<std::string>({"1", "Alice"}));
+}
+
+TEST_F(ExecutorInsertTablesTest, SuccessfulInsertIntoWithColumnsSpecified) {
+    command::InsertCommand cmd;
+    cmd.table_name = "test_table";
+    cmd.values = {"1", "Alice"};
+    cmd.columns = {"id", "name"};  // Specify columns explicitly
+
+    results::ExecutionResult result = executor::execute_insert_command(cmd, test_data_dir);
+    ASSERT_EQ(result.get_message(), "1 row inserted.");
+    AssertRecordForSlot(0, 0, std::vector<std::string>({"1", "Alice"}));
+}
+
+TEST_F(ExecutorInsertTablesTest, SuccessfulInsertIntoWithColumnsReordered) {
+    command::InsertCommand cmd;
+    cmd.table_name = "test_table";
+    cmd.values = {"Alice", "1"};
+    cmd.columns = {"name", "id"};  // Specify columns explicitly with a different order
+
+    results::ExecutionResult result = executor::execute_insert_command(cmd, test_data_dir);
+    ASSERT_EQ(result.get_message(), "1 row inserted.");
+    AssertRecordForSlot(0, 0, std::vector<std::string>({"1", "Alice"}));
+}
+
+TEST_F(ExecutorInsertTablesTest, InsertFailsWithTypeMismatchedValues) {
+    command::InsertCommand cmd;
+    cmd.table_name = "test_table";
+    cmd.values = {"bad value for id", "Alice"};
+    cmd.columns = {"id", "name"};
+
+    results::ExecutionResult result = executor::execute_insert_command(cmd, test_data_dir);
+    ASSERT_EQ(result.get_message(), "ERROR: Value 'bad value for id' for column 'id' is not a valid integer.");
+}
+
+TEST_F(ExecutorInsertTablesTest, InsertFailsWithNonExistentColumn) {
+    command::InsertCommand cmd;
+    cmd.table_name = "test_table";
+    cmd.values = {"1", "Alice"};
+    cmd.columns = {"id", "nonexistentcolumn"};  // Specify a column that does not exist
+
+    results::ExecutionResult result = executor::execute_insert_command(cmd, test_data_dir);
+    ASSERT_EQ(result.get_message(), "ERROR: Column 'nonexistentcolumn' does not exist in table 'test_table'.");
+}
+
+TEST_F(ExecutorInsertTablesTest, InsertFillsPageAndSpills) {
+    // For simplicity, let's estimate the size.
+    // id "0" is 1 byte. name is 100 bytes. 2 length prefixes (2*2=4 bytes).
+    // Total ~ 1 + 100 + 4 = 105 bytes.
+    const size_t record_size_estimate = 105;
+    const size_t usable_space = simpledb::storage::PAGE_SIZE - simpledb::storage::Page::HEADER_SIZE;
+    const size_t space_per_record = record_size_estimate + sizeof(simpledb::storage::Page::Slot);
+    const int num_records_to_fill_page = usable_space / space_per_record;
+    const std::string fixed_name(100, 'A');  // A 100-byte string
+
+    command::InsertCommand cmd;
+    cmd.table_name = "test_table";
+
+    // Fill the page
+    for (int i = 0; i < num_records_to_fill_page; ++i) {
+        cmd.values = {"0", fixed_name};
+        results::ExecutionResult result = executor::execute_insert_command(cmd, test_data_dir);
+        ASSERT_EQ(result.get_message(), "1 row inserted.");
+    }
+
+    // Assert that the first page is filled with num_records_to_fill_page records
+    for (int i = 0; i < num_records_to_fill_page; ++i) {
+        AssertRecordForSlot(0, i, std::vector<std::string>({"0", fixed_name}));
+    }
+
+    // Now insert one more record to trigger a spill
+    // Use a different fixed name filled with 'B's to differentiate it
+    const std::string fixed_name_b(100, 'B');  // A 100-byte string
+
+    cmd.values = {"1", fixed_name_b};
+    results::ExecutionResult result = executor::execute_insert_command(cmd, test_data_dir);
+    ASSERT_EQ(result.get_message(), "1 row inserted.");
+
+    // Assert the second page is created and contains the new record
+    AssertRecordForSlot(1, 0, std::vector<std::string>({"1", fixed_name_b}));
 }
