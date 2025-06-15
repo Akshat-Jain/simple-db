@@ -5,7 +5,9 @@
 #include "simpledb/storage/page.h"
 #include "simpledb/storage/table_heap.h"
 
+#include <filesystem>
 #include <gtest/gtest.h>
+#include <vector>
 
 class TableHeapTest : public ::testing::Test {
    protected:
