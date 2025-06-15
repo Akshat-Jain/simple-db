@@ -33,18 +33,19 @@ namespace {  // Anonymous namespace to keep helper functions private to this tra
                 if (current_char == '\'') {
                     // Check for escaped single quote ('')
                     if (pos + 1 < input.length() && input[pos + 1] == '\'') {
-                        current_item += '\'';  // Add one quote to the item
-                        pos++;                 // Skip the second quote
+                        // This means we have '' in the string literal, which should become a single quote.
+                        current_item += '\'';
+                        pos++;
                     } else {
                         in_string_literal = false;
                     }
+                } else {
+                    current_item += current_char;
                 }
-                current_item += current_char;
             } else {  // Not in a string literal
                 switch (current_char) {
                     case '\'':
                         in_string_literal = true;
-                        current_item += current_char;
                         break;
 
                     case ',':
@@ -392,7 +393,7 @@ namespace parser {
         std::string values_keyword = "VALUES";
         if (pos + values_keyword.length() > remainder.length() ||
             stringutils::to_upper(remainder.substr(pos, values_keyword.length())) != values_keyword) {
-            return {std::nullopt, "ERROR: Expected 'VALUES' keyword."};
+            return {std::nullopt, "ERROR: Expected VALUES keyword."};
         }
         pos += values_keyword.length();  // Advance past "VALUES"
 

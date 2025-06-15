@@ -10,6 +10,8 @@ TEST(Parser, GetCommandType) {
     ASSERT_EQ(parser::get_command_type("SELECT * FROM my_table"), parser::CommandType::SELECT);
     ASSERT_EQ(parser::get_command_type("DROP TABLE my_table"), parser::CommandType::DROP_TABLE);
     ASSERT_EQ(parser::get_command_type("SHOW TABLES"), parser::CommandType::SHOW_TABLES);
+    ASSERT_EQ(parser::get_command_type("INSERT INTO my_table (id, name) VALUES (1, 'Alice')"),
+              parser::CommandType::INSERT);
     ASSERT_EQ(parser::get_command_type("UNKNOWN COMMAND"), parser::CommandType::UNKNOWN);
 }
 
@@ -19,6 +21,8 @@ TEST(Parser, GetCommandTypeCaseInsensitive) {
     ASSERT_EQ(parser::get_command_type("select * from my_table"), parser::CommandType::SELECT);
     ASSERT_EQ(parser::get_command_type("drop table my_table"), parser::CommandType::DROP_TABLE);
     ASSERT_EQ(parser::get_command_type("show tables"), parser::CommandType::SHOW_TABLES);
+    ASSERT_EQ(parser::get_command_type("insert into my_table (id, name) VALUES (1, 'Alice')"),
+              parser::CommandType::INSERT);
 }
 
 TEST(Parser, GetCommandTypeHandlesWhitespace) {
@@ -27,6 +31,7 @@ TEST(Parser, GetCommandTypeHandlesWhitespace) {
     ASSERT_EQ(parser::get_command_type("SELECT   *   FROM    t"), parser::CommandType::SELECT);
     ASSERT_EQ(parser::get_command_type("\tDROP\tTABLE\tt"), parser::CommandType::DROP_TABLE);
     ASSERT_EQ(parser::get_command_type("   SHOW   TABLES   "), parser::CommandType::SHOW_TABLES);
+    ASSERT_EQ(parser::get_command_type("INSERT INTO t (a) VALUES (1)  "), parser::CommandType::INSERT);
 }
 
 TEST(Parser, GetCommandTypeHandlesPartialOrIncorrectKeywords) {
@@ -186,4 +191,79 @@ TEST(ShowTables, ExtraTokens) {
     auto parse_result = parser::parse_show_tables("SHOW TABLES extra_token");
     ASSERT_FALSE(parse_result);
     ASSERT_EQ("ERROR: Invalid SHOW TABLES command. Found extra tokens: 'extra_token'.", parse_result.error_message);
+}
+
+TEST(Insert, BasicInsert) {
+    std::string query = "INSERT INTO my_table VALUES (1, 'Alice')";
+    auto parse_result = parser::parse_insert(query);
+    ASSERT_TRUE(parse_result);
+
+    std::optional<command::InsertCommand> insert_command = parse_result.command;
+    ASSERT_EQ("my_table", insert_command->table_name);
+    ASSERT_TRUE(insert_command->columns.empty());
+    ASSERT_EQ(std::vector<std::string>({"1", "Alice"}), insert_command->values);
+}
+
+TEST(Insert, InsertWithColumns) {
+    std::string query = "INSERT INTO my_table (id, name) VALUES (1, 'Alice')";
+    auto parse_result = parser::parse_insert(query);
+    ASSERT_TRUE(parse_result);
+
+    std::optional<command::InsertCommand> insert_command = parse_result.command;
+    ASSERT_EQ("my_table", insert_command->table_name);
+    ASSERT_EQ(std::vector<std::string>({"id", "name"}), insert_command->columns);
+    ASSERT_EQ(std::vector<std::string>({"1", "Alice"}), insert_command->values);
+}
+
+TEST(Insert, ExtraWhitespace) {
+    std::string query = "   INSERT   INTO   my_table   (id, name)   VALUES   (1, 'a b c d')   ";
+    auto parse_result = parser::parse_insert(query);
+    ASSERT_TRUE(parse_result);
+
+    std::optional<command::InsertCommand> insert_command = parse_result.command;
+    ASSERT_EQ("my_table", insert_command->table_name);
+    ASSERT_EQ(std::vector<std::string>({"id", "name"}), insert_command->columns);
+    ASSERT_EQ(std::vector<std::string>({"1", "a b c d"}), insert_command->values);
+}
+
+TEST(Insert, MissingIntoKeyword) {
+    auto result = parser::parse_insert("INSERT my_table VALUES (1, 'Alice')");
+    ASSERT_FALSE(result);
+    ASSERT_EQ("ERROR: Expected INTO keyword.", result.error_message);
+}
+
+TEST(Insert, MissingTableName) {
+    auto result = parser::parse_insert("INSERT INTO (1, 'Alice')");
+    ASSERT_FALSE(result);
+    ASSERT_EQ("ERROR: Table name '(1,' contains invalid characters.", result.error_message);
+}
+
+TEST(Insert, NoValues) {
+    auto result = parser::parse_insert("INSERT INTO my_table");
+    ASSERT_FALSE(result);
+    ASSERT_EQ("ERROR: Incomplete INSERT statement. Expected columns list or 'VALUES'.", result.error_message);
+}
+
+TEST(Insert, NoValuesAfterValuesKeyword) {
+    auto result = parser::parse_insert("INSERT INTO my_table VALUES");
+    ASSERT_FALSE(result);
+    ASSERT_EQ("ERROR: Expected '(' to start list.", result.error_message);
+}
+
+TEST(Insert, MissingValuesKeyword) {
+    auto result = parser::parse_insert("INSERT INTO my_table (id, name)");
+    ASSERT_FALSE(result);
+    ASSERT_EQ("ERROR: Expected VALUES keyword.", result.error_message);
+}
+
+TEST(Insert, MissingValuesAfterColumns) {
+    auto result = parser::parse_insert("INSERT INTO my_table (id, name) VALUES");
+    ASSERT_FALSE(result);
+    ASSERT_EQ("ERROR: Expected '(' to start list.", result.error_message);
+}
+
+TEST(Insert, DuplicateColumnName) {
+    auto result = parser::parse_insert("INSERT INTO my_table (id, id) VALUES (1, 'Alice')");
+    ASSERT_FALSE(result);
+    ASSERT_EQ("ERROR: Duplicate column names found in the column list.", result.error_message);
 }
