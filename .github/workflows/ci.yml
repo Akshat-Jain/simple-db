@@ -4,7 +4,7 @@ on:
   push:
     branches: [ main ]
   pull_request:
-    branches: [ main ] # Optional: Also runs on pull requests targeting main
+    branches: [ main ]
 
 jobs:
   build:
