@@ -61,3 +61,4 @@ It's very slow for large tables but is simple to implement because you don't nee
 
 ## Minor Todos:
 1. Update application.log filepath to also use ENV_DATA_DIR.
+2. Update ci.yml to use --parallel flag for cmake.
