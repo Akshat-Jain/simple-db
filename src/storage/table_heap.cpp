@@ -11,6 +11,34 @@
 
 namespace simpledb::storage {
 
+    TableHeap::Iterator::Iterator(TableHeap* parent_heap, PageId page_id, uint16_t slot_num)
+        : parent_heap_(parent_heap), current_page_id_(page_id), current_slot_num_(slot_num) {}
+
+    std::optional<std::vector<char>> TableHeap::Iterator::next() {
+        uint32_t num_pages = parent_heap_->GetNumPages();
+        while (true) {
+            if (current_page_id_ >= num_pages) {
+                // No more pages left, return std::nullopt to signal end of iteration.
+                return std::nullopt;
+            }
+
+            Page page;
+            parent_heap_->ReadPage(current_page_id_, &page);
+
+            if (current_slot_num_ >= page.GetNumRecords()) {
+                // If we have exhausted the current page, move to the next page.
+                current_slot_num_ = 0;
+                current_page_id_ += 1;
+                continue;  // Re-check the new page.
+            }
+
+            // If we have a valid slot, break out of the loop to return the record.
+            std::vector<char> record = page.GetRecord(page.GetSlot(current_slot_num_));
+            current_slot_num_ += 1;  // Move to the next slot for the next call.
+            return record;
+        }
+    }
+
     TableHeap::TableHeap(const std::string& table_data_path) : file_path_(table_data_path) {
         // Try to open the file for both reading and writing in binary mode.
         // This will succeed if the file already exists.

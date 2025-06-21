@@ -2,6 +2,8 @@
 
 This is a dump of my thoughts when working on a new feature, or exploring different alternatives for xyz stuff, etc.
 
+Next task is to add support for SELECT queries.
+
 #### Future todo #1: Buffer Pool Manager
 
 A "Pager" (also called a Buffer Pool Manager) is an in-memory cache for disk pages. 

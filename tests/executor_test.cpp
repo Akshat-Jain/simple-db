@@ -5,6 +5,7 @@
 #include "simpledb/executor.h"
 #include "simpledb/catalog.h"
 #include "simpledb/storage/page.h"
+#include "simpledb/serializer.h"
 #include "simpledb/storage/table_heap.h"
 
 #include <gtest/gtest.h>
@@ -134,26 +135,8 @@ class ExecutorInsertTablesTest : public ExecutorTestBase {
         std::vector<char> record_blob = page.GetRecord(slot);
 
         // 4. Deserialize and assert
-        std::vector<std::string> actual_values = deserialize_row(record_blob);
+        std::vector<std::string> actual_values = serializer::deserialize(record_blob);
         ASSERT_EQ(expected_values, actual_values);
-    }
-
-   private:
-    static std::vector<std::string> deserialize_row(const std::vector<char>& blob) {
-        std::vector<std::string> values;
-        size_t pos = 0;
-        while (pos < blob.size()) {
-            // 1. Read the 2-byte length prefix.
-            uint16_t len;
-            memcpy(&len, &blob[pos], sizeof(uint16_t));
-            pos += sizeof(uint16_t);
-
-            // 2. Read the string data of that length.
-            std::string value(blob.begin() + pos, blob.begin() + pos + len);
-            values.push_back(value);
-            pos += len;
-        }
-        return values;
     }
 };
 
