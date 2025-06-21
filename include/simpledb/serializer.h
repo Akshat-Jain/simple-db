@@ -11,6 +11,6 @@
 namespace serializer {
     std::vector<char> serialize(const std::vector<std::string>& data);
     std::vector<std::string> deserialize(const std::vector<char>& data);
-}
+}  // namespace serializer
 
 #endif  // SIMPLE_DB_SERIALIZER_H
