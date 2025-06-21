@@ -5,6 +5,7 @@
 #include "simpledb/executor.h"
 
 #include "simpledb/config.h"
+#include "simpledb/serializer.h"
 #include "simpledb/execution/row.h"
 #include "simpledb/storage/table_heap.h"
 #include "simpledb/utils/logging.h"
@@ -194,17 +195,7 @@ namespace executor {
 
         // Serialize the ordered values into a vector<char> format
         // We will use a format [length of value][value][length of value][value]...
-        std::vector<char> record_data;
-        for (const auto& value : ordered_values) {
-            // First, we need to store the length of the value as a 16-bit unsigned integer
-            uint16_t length = static_cast<uint16_t>(value.size());
-            // Create a pointer to the length and reinterpret it as a char array
-            const char* len_ptr = reinterpret_cast<const char*>(&length);
-            // Insert the length as a 2-byte value
-            record_data.insert(record_data.end(), len_ptr, len_ptr + sizeof(uint16_t));
-            // Now insert the actual value
-            record_data.insert(record_data.end(), value.begin(), value.end());
-        }
+        std::vector<char> record_data = serializer::serialize(ordered_values);
 
         // Insert the record into the table heap.
         simpledb::storage::TableHeap table_heap(table_data_path.string());

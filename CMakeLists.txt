@@ -78,6 +78,7 @@ add_executable(simple-db
         src/result.cpp
         src/storage/page.cpp
         src/storage/table_heap.cpp
+        src/serializer.cpp
 )
 
 # --- Link the executable against Readline using pkg-config variables ---
@@ -127,6 +128,7 @@ add_executable(run_tests
         src/result.cpp
         src/storage/page.cpp
         src/storage/table_heap.cpp
+        src/serializer.cpp
 )
 
 # --- Configure 'run_tests' Target ---
