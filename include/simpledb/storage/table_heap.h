@@ -18,6 +18,26 @@ namespace simpledb::storage {
     // Type alias is mostly for clarity, and future maintainability.
     using PageId = uint32_t;
 
+    /**
+     * @brief Manages the collection of pages on disk that store a single table's data.
+     *
+     * The TableHeap class provides an abstraction over a single data file (e.g., "users.data")
+     * that contains all the records for a table. The term "heap" signifies that the records
+     * within the file are not stored in any particular logical order (e.g., they are not
+     * sorted by a primary key). Records are simply "heaped" into pages as they are inserted.
+     *
+     * This class is a core component of the **Storage Layer**. It is used by the
+     * **Execution Layer**, specifically by the `TableScanOperator`, to retrieve the physical
+     * data for a table. It abstracts away the details of page management, file I/O, and
+     * record placement from the higher-level query processing logic.
+     *
+     * Internally, the file is a sequence of fixed-size pages, and each page uses a
+     * slotted page layout to manage variable-length records.
+     *
+     * Its primary responsibilities include:
+     *  - Inserting new records into the table.
+     *  - Providing an iterator to scan all records in the table sequentially.
+     */
     class TableHeap {
        public:
         /**
