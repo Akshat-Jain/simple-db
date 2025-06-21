@@ -8,8 +8,10 @@
 #include <cstdint>
 #include <fstream>
 #include <string>
+#include <optional>
 #include <vector>
 
+#include "simpledb/execution/row.h"
 #include "simpledb/storage/page.h"
 
 namespace simpledb::storage {
@@ -41,6 +43,29 @@ namespace simpledb::storage {
     class TableHeap {
        public:
         /**
+         * @brief An iterator for performing a sequential scan over all records in a TableHeap.
+         *
+         * This iterator moves from the first record of the first page to the last record
+         * of the last page. It is the foundational tool for full table scans.
+         */
+        class Iterator {
+           public:
+            explicit Iterator(TableHeap* parent_heap, PageId page_id, uint16_t slot_num);
+
+            std::optional<std::vector<char>> next();
+
+           private:
+            // A pointer to the parent TableHeap, used to call its private methods like ReadPage.
+            TableHeap* parent_heap_;
+
+            // The ID of the page the iterator is currently scanning.
+            PageId current_page_id_;
+
+            // The number of the slot on the current page that the iterator will read next.
+            uint16_t current_slot_num_;
+        };
+
+        /**
          * Constructor that opens the table's data file.
          * @param table_data_path The path to the file that stores the table's data.
          */
@@ -52,6 +77,18 @@ namespace simpledb::storage {
          * @return True if the insertion was successful, false otherwise.
          */
         bool InsertRecord(const std::vector<char>& record_data);
+
+        /**
+         * @brief Returns an iterator pointing to the first record in the table.
+         *
+         * This method creates an iterator initialized to the very beginning of the heap
+         * (page 0, slot 0). This design, where the starting point is passed to the
+         * iterator's constructor, allows for future flexibility, such as creating
+         * iterators that start at arbitrary pages for parallel scans.
+         *
+         * @return An iterator initialized to the start of the heap.
+         */
+        TableHeap::Iterator begin() { return Iterator(this, 0, 0); }
 
        private:
         /**
