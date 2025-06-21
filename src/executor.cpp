@@ -5,6 +5,7 @@
 #include "simpledb/executor.h"
 
 #include "simpledb/config.h"
+#include "simpledb/execution/row.h"
 #include "simpledb/storage/table_heap.h"
 #include "simpledb/utils/logging.h"
 
@@ -117,7 +118,7 @@ namespace executor {
     results::ExecutionResult execute_show_tables_command() {
         const std::vector<catalog::TableSchema>& table_schemas = catalog::get_all_schemas();
         std::vector<std::string> headers = {"Table Name"};
-        std::vector<results::Row> data;
+        std::vector<row::Row> data;
         for (const auto& schema : table_schemas) {
             data.push_back({schema.table_name});
         }

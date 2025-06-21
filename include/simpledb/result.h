@@ -5,18 +5,19 @@
 #ifndef SIMPLE_DB_RESULT_H
 #define SIMPLE_DB_RESULT_H
 
+#include "simpledb/execution/row.h"
+
 #include <iostream>
 #include <optional>
 #include <string>
 #include <vector>
 
 namespace results {
-    using Row = std::vector<std::string>;
     enum class ResultStatus { SUCCESS, ERROR };
 
     struct ResultSet {
         std::vector<std::string> headers;
-        std::vector<Row> rows;
+        std::vector<row::Row> rows;
     };
 
     inline bool operator==(const ResultSet& lhs, const ResultSet& rhs) {
