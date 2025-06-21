@@ -4,6 +4,9 @@
 
 #include "simpledb/serializer.h"
 
+#include <cstdint>
+#include <cstring>
+
 namespace serializer {
     std::vector<char> serialize(const std::vector<std::string>& data) {
         std::vector<char> record_data;
