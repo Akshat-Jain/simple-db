@@ -6,6 +6,7 @@
 #define SIMPLEDB_PARSER_H
 #include <optional>
 
+#include "simpledb/ast/ast.h"
 #include "command.h"
 
 namespace parser {
@@ -31,6 +32,8 @@ namespace parser {
     ParseResult<command::ShowTablesCommand> parse_show_tables(const std::string& query);
 
     ParseResult<command::InsertCommand> parse_insert(const std::string& query);
+
+    ParseResult<ast::SelectCommand> parse_select(const std::string& query);
 }  // namespace parser
 
 #endif  // SIMPLEDB_PARSER_H

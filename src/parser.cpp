@@ -420,4 +420,63 @@ namespace parser {
         // 10. Phew! If we reach here, we have a valid INSERT command.
         return {command, std::nullopt};
     }
+
+    ParseResult<ast::SelectCommand> parse_select(const std::string &query) {
+        // We currently support only very basic SELECT queries:
+        // SELECT col1, col2 FROM table_name
+        // SELECT * FROM table_name
+
+        logging::log.debug("Query is: {}", query);
+        std::string trimmed_query = stringutils::trim(query);
+        logging::log.debug("Query after trimming is: {}", trimmed_query);
+        ast::SelectCommand command;
+
+        // 1. Find the position of "SELECT" and "FROM" (case-insensitively)
+        std::string upper_query = stringutils::to_upper(trimmed_query);
+        size_t select_pos = upper_query.find("SELECT");
+        size_t from_pos = upper_query.find("FROM");
+
+        // 2. Basic validation
+        if (select_pos == std::string::npos || from_pos == std::string::npos || select_pos > from_pos) {
+            return {std::nullopt, "ERROR: Invalid SELECT query. Expected 'SELECT ... FROM ...'."};
+        }
+
+        // 3. Extract the projection string (the part between SELECT and FROM)
+        std::string projection_str = trimmed_query.substr(select_pos + 6, from_pos - (select_pos + 6));
+        projection_str = stringutils::trim(projection_str);
+        if (projection_str.empty()) {
+            return {std::nullopt, "ERROR: Projection list is empty. Expected at least one column."};
+        }
+
+        // 4. Parse the projection string
+        std::string token;
+        if (projection_str == "*") {
+            // no-op. Empty projection means all columns.
+        } else {
+            // Split projection_str by commas and put into command.projection
+            // You can use a stringstream for this part
+            std::stringstream proj_ss(projection_str);
+            while (std::getline(proj_ss, token, ',')) {
+                command.projection.push_back(stringutils::trim(token));
+            }
+        }
+
+        // 5. Extract the table name (the part after FROM)
+        std::string from_clause_str = trimmed_query.substr(from_pos + 4);  // length of "FROM"
+        std::stringstream from_clause = std::stringstream(from_clause_str);
+        if (!(from_clause >> command.table_name)) {
+            return {std::nullopt, "ERROR: Expected table name after FROM keyword."};
+        }
+        // 6. Check if the table name is valid
+        if (!stringutils::is_alpha_num_underscore(command.table_name)) {
+            return {std::nullopt, "ERROR: Table name '" + command.table_name + "' contains invalid characters."};
+        }
+        // 7. Check if there are any extra tokens after the table name
+        if (from_clause >> token) {
+            return {std::nullopt, "ERROR: Extra tokens found after table name: '" + token + "'."};
+        }
+
+        // 8. If we reach here, we have a valid SELECT command.
+        return {command, std::nullopt};
+    }
 }  // namespace parser
