@@ -50,7 +50,12 @@ results::ExecutionResult parse_and_execute(const std::string& query) {
             if (!parse_result) {
                 return results::ExecutionResult::Error(*parse_result.error_message);
             }
-            auto plan = planner::plan_select(*parse_result.command, config::get_config().data_dir);
+            std::unique_ptr<simpledb::execution::Operator> plan;
+            try {
+                plan = planner::plan_select(*parse_result.command, config::get_config().data_dir);
+            } catch (const std::exception& e) {
+                return results::ExecutionResult::Error(e.what());
+            }
 
             std::vector<std::string> headers;
             if (parse_result.command->projection.empty()) {
