@@ -118,6 +118,9 @@ add_executable(run_tests
         tests/storage/page_test.cpp
         tests/storage/table_heap_test.cpp
         tests/storage/table_heap_iterator_test.cpp
+        tests/execution/table_scan_operator_test.cpp
+        tests/execution/projection_operator_test.cpp
+        tests/select_integration_test.cpp
         # Add other tests/*.cpp files here
 
         # Include source files needed by the tests that aren't part of a library yet
@@ -135,8 +138,6 @@ add_executable(run_tests
         src/execution/table_scan_operator.cpp
         src/execution/projection_operator.cpp
         src/planner.cpp
-        tests/execution/table_scan_operator_test.cpp
-        tests/execution/projection_operator_test.cpp
 )
 
 # --- Configure 'run_tests' Target ---
