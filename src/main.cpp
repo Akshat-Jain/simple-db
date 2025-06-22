@@ -12,6 +12,7 @@
 #include "simpledb/utils/logging.h"
 #include "simpledb/catalog.h"
 #include "simpledb/executor.h"
+#include "simpledb/planner.h"
 
 results::ExecutionResult parse_and_execute(const std::string& query) {
     parser::CommandType command_type = parser::get_command_type(query);
@@ -44,8 +45,25 @@ results::ExecutionResult parse_and_execute(const std::string& query) {
             }
             return executor::execute_insert_command(*parse_result.command, config::get_config().data_dir);
         }
-        case parser::CommandType::SELECT:
-            return results::ExecutionResult::Ok("OK (Placeholder - SELECT not yet implemented)");
+        case parser::CommandType::SELECT: {
+            auto parse_result = parser::parse_select(query);
+            if (!parse_result) {
+                return results::ExecutionResult::Error(*parse_result.error_message);
+            }
+            auto plan = planner::plan_select(*parse_result.command);
+            while (true) {
+                auto row = plan->next();
+                if (!row) {
+                    break;  // End of results
+                }
+                // Print the row to the console
+                for (const auto& val : *row) {
+                    std::cout << val << "\t";
+                }
+                std::cout << std::endl;
+            }
+            return results::ExecutionResult::Success();  // Indicate success, no data returned here
+        }
         case parser::CommandType::UNKNOWN:
         default:
             return results::ExecutionResult::Error("ERROR: Unknown or unsupported command.");

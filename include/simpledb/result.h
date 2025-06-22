@@ -57,6 +57,7 @@ namespace results {
         // --- Static Factory Methods (Declarations) ---
         static ExecutionResult Ok(std::string msg);
         static ExecutionResult Error(std::string error_msg);
+        static ExecutionResult Success();
         static ExecutionResult SuccessWithData(ResultSet data, std::optional<std::string> msg = std::nullopt);
 
         // --- Const Accessor Methods (Declarations, can be defined inline if simple) ---

@@ -81,6 +81,7 @@ add_executable(simple-db
         src/serializer.cpp
         src/execution/table_scan_operator.cpp
         src/execution/projection_operator.cpp
+        src/planner.cpp
 )
 
 # --- Link the executable against Readline using pkg-config variables ---
@@ -133,6 +134,7 @@ add_executable(run_tests
         src/serializer.cpp
         src/execution/table_scan_operator.cpp
         src/execution/projection_operator.cpp
+        src/planner.cpp
 )
 
 # --- Configure 'run_tests' Target ---

@@ -19,6 +19,8 @@ namespace results {
         return {ResultStatus::ERROR, std::move(error_msg), std::nullopt};
     }
 
+    ExecutionResult ExecutionResult::Success() { return {ResultStatus::SUCCESS, std::nullopt, std::nullopt}; }
+
     ExecutionResult ExecutionResult::SuccessWithData(ResultSet data, std::optional<std::string> msg) {
         return {ResultStatus::SUCCESS, std::move(msg), data};
     }
