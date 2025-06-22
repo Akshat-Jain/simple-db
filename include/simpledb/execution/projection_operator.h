@@ -1,0 +1,8 @@
+//
+// Created by Akshat Jain on 22/06/25.
+//
+
+#ifndef SIMPLE_DB_PROJECTION_OPERATOR_H
+#define SIMPLE_DB_PROJECTION_OPERATOR_H
+
+#endif  // SIMPLE_DB_PROJECTION_OPERATOR_H
