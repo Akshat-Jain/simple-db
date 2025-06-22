@@ -19,7 +19,7 @@ class SelectIntegrationTest : public ::testing::Test {
     void SetUp() override {
         // Create a unique temporary file path for each test.
         const ::testing::TestInfo* const test_info = ::testing::UnitTest::GetInstance()->current_test_info();
-        test_data_dir = std::filesystem::temp_directory_path().string() + "simpledb_" + test_info->test_suite_name() +
+        test_data_dir = std::filesystem::temp_directory_path().string() + "/simpledb_" + test_info->test_suite_name() +
                         "_" + test_info->name();
         if (std::filesystem::exists(test_data_dir)) {
             std::filesystem::remove_all(test_data_dir);

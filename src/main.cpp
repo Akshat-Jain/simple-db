@@ -51,6 +51,27 @@ results::ExecutionResult parse_and_execute(const std::string& query) {
                 return results::ExecutionResult::Error(*parse_result.error_message);
             }
             auto plan = planner::plan_select(*parse_result.command, config::get_config().data_dir);
+
+            std::vector<std::string> headers;
+            if (parse_result.command->projection.empty()) {
+                // This means SELECT *, so we get all column names from the catalog.
+                auto schema_opt = catalog::get_table_schema(parse_result.command->table_name);
+                if (!schema_opt) {
+                    return results::ExecutionResult::Error("Table not found: " + parse_result.command->table_name);
+                }
+                for (const auto& col_def : schema_opt->column_definitions) {
+                    headers.push_back(col_def.column_name);
+                }
+            } else {  // This means specific columns were requested.
+                headers = parse_result.command->projection;
+            }
+
+            // 2. Print the headers.
+            for (const auto& header : headers) {
+                std::cout << header << "\t";
+            }
+            std::cout << std::endl;
+
             while (true) {
                 auto row = plan->next();
                 if (!row) {
