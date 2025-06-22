@@ -12,6 +12,8 @@ TEST(Parser, GetCommandType) {
     ASSERT_EQ(parser::get_command_type("SHOW TABLES"), parser::CommandType::SHOW_TABLES);
     ASSERT_EQ(parser::get_command_type("INSERT INTO my_table (id, name) VALUES (1, 'Alice')"),
               parser::CommandType::INSERT);
+    ASSERT_EQ(parser::get_command_type("SELECT * FROM my_table"), parser::CommandType::SELECT);
+    ASSERT_EQ(parser::get_command_type("SELECT col1, col2 FROM my_table"), parser::CommandType::SELECT);
     ASSERT_EQ(parser::get_command_type("UNKNOWN COMMAND"), parser::CommandType::UNKNOWN);
 }
 
@@ -23,6 +25,8 @@ TEST(Parser, GetCommandTypeCaseInsensitive) {
     ASSERT_EQ(parser::get_command_type("show tables"), parser::CommandType::SHOW_TABLES);
     ASSERT_EQ(parser::get_command_type("insert into my_table (id, name) VALUES (1, 'Alice')"),
               parser::CommandType::INSERT);
+    ASSERT_EQ(parser::get_command_type("select * from my_table"), parser::CommandType::SELECT);
+    ASSERT_EQ(parser::get_command_type("select col1, col2 from my_table"), parser::CommandType::SELECT);
 }
 
 TEST(Parser, GetCommandTypeHandlesWhitespace) {
@@ -32,6 +36,8 @@ TEST(Parser, GetCommandTypeHandlesWhitespace) {
     ASSERT_EQ(parser::get_command_type("\tDROP\tTABLE\tt"), parser::CommandType::DROP_TABLE);
     ASSERT_EQ(parser::get_command_type("   SHOW   TABLES   "), parser::CommandType::SHOW_TABLES);
     ASSERT_EQ(parser::get_command_type("INSERT INTO t (a) VALUES (1)  "), parser::CommandType::INSERT);
+    ASSERT_EQ(parser::get_command_type("SELECT * FROM t  "), parser::CommandType::SELECT);
+    ASSERT_EQ(parser::get_command_type("SELECT col1, col2 FROM t  "), parser::CommandType::SELECT);
 }
 
 TEST(Parser, GetCommandTypeHandlesPartialOrIncorrectKeywords) {
@@ -266,4 +272,58 @@ TEST(Insert, DuplicateColumnName) {
     auto result = parser::parse_insert("INSERT INTO my_table (id, id) VALUES (1, 'Alice')");
     ASSERT_FALSE(result);
     ASSERT_EQ("ERROR: Duplicate column names found in the column list.", result.error_message);
+}
+
+TEST(Select, BasicSelect) {
+    std::string query = "SELECT col1, col2 FROM my_table";
+    auto parse_result = parser::parse_select(query);
+    ASSERT_TRUE(parse_result);
+
+    std::optional<ast::SelectCommand> select_command = parse_result.command;
+    ASSERT_EQ("my_table", select_command->table_name);
+    ASSERT_EQ(std::vector<std::string>({"col1", "col2"}), select_command->projection);
+}
+
+TEST(Select, BasicSelectAllColumns) {
+    std::string query = "SELECT * FROM my_table";
+    auto parse_result = parser::parse_select(query);
+    ASSERT_TRUE(parse_result);
+
+    std::optional<ast::SelectCommand> select_command = parse_result.command;
+    ASSERT_EQ("my_table", select_command->table_name);
+    ASSERT_EQ(std::vector<std::string>({}), select_command->projection);
+}
+
+TEST(Select, ExtraWhitespace) {
+    std::string query = "   SELECT   col1 ,    col2   FROM   my_table   ";
+    auto parse_result = parser::parse_select(query);
+    ASSERT_TRUE(parse_result);
+
+    std::optional<ast::SelectCommand> select_command = parse_result.command;
+    ASSERT_EQ("my_table", select_command->table_name);
+    ASSERT_EQ(std::vector<std::string>({"col1", "col2"}), select_command->projection);
+}
+
+TEST(Select, MissingFromKeyword) {
+    auto result = parser::parse_select("SELECT col1, col2 my_table");
+    ASSERT_FALSE(result);
+    ASSERT_EQ("ERROR: Invalid SELECT query. Expected 'SELECT ... FROM ...'.", result.error_message);
+}
+
+TEST(Select, NoColumnsSpecified) {
+    auto result = parser::parse_select("SELECT FROM my_table");
+    ASSERT_FALSE(result);
+    ASSERT_EQ("ERROR: Projection list is empty. Expected at least one column.", result.error_message);
+}
+
+TEST(Select, NoTableName) {
+    auto result = parser::parse_select("SELECT col1, col2 FROM ");
+    ASSERT_FALSE(result);
+    ASSERT_EQ("ERROR: Expected table name after FROM keyword.", result.error_message);
+}
+
+TEST(Select, ExtraTokenAfterTableName) {
+    auto result = parser::parse_select("SELECT col1, col2 FROM my_table extra_token");
+    ASSERT_FALSE(result);
+    ASSERT_EQ("ERROR: Extra tokens found after table name: 'extra_token'.", result.error_message);
 }

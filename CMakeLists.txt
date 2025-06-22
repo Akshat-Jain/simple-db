@@ -78,6 +78,10 @@ add_executable(simple-db
         src/result.cpp
         src/storage/page.cpp
         src/storage/table_heap.cpp
+        src/serializer.cpp
+        src/execution/table_scan_operator.cpp
+        src/execution/projection_operator.cpp
+        src/planner.cpp
 )
 
 # --- Link the executable against Readline using pkg-config variables ---
@@ -112,6 +116,11 @@ add_executable(run_tests
         tests/parser_test.cpp
         tests/catalog_test.cpp
         tests/storage/page_test.cpp
+        tests/storage/table_heap_test.cpp
+        tests/storage/table_heap_iterator_test.cpp
+        tests/execution/table_scan_operator_test.cpp
+        tests/execution/projection_operator_test.cpp
+        tests/select_integration_test.cpp
         # Add other tests/*.cpp files here
 
         # Include source files needed by the tests that aren't part of a library yet
@@ -125,7 +134,10 @@ add_executable(run_tests
         src/result.cpp
         src/storage/page.cpp
         src/storage/table_heap.cpp
-        tests/storage/table_heap_test.cpp
+        src/serializer.cpp
+        src/execution/table_scan_operator.cpp
+        src/execution/projection_operator.cpp
+        src/planner.cpp
 )
 
 # --- Configure 'run_tests' Target ---

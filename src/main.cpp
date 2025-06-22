@@ -12,6 +12,7 @@
 #include "simpledb/utils/logging.h"
 #include "simpledb/catalog.h"
 #include "simpledb/executor.h"
+#include "simpledb/planner.h"
 
 results::ExecutionResult parse_and_execute(const std::string& query) {
     parser::CommandType command_type = parser::get_command_type(query);
@@ -44,8 +45,51 @@ results::ExecutionResult parse_and_execute(const std::string& query) {
             }
             return executor::execute_insert_command(*parse_result.command, config::get_config().data_dir);
         }
-        case parser::CommandType::SELECT:
-            return results::ExecutionResult::Ok("OK (Placeholder - SELECT not yet implemented)");
+        case parser::CommandType::SELECT: {
+            auto parse_result = parser::parse_select(query);
+            if (!parse_result) {
+                return results::ExecutionResult::Error(*parse_result.error_message);
+            }
+            std::unique_ptr<simpledb::execution::Operator> plan;
+            try {
+                plan = planner::plan_select(*parse_result.command, config::get_config().data_dir);
+            } catch (const std::exception& e) {
+                return results::ExecutionResult::Error(e.what());
+            }
+
+            std::vector<std::string> headers;
+            if (parse_result.command->projection.empty()) {
+                // This means SELECT *, so we get all column names from the catalog.
+                auto schema_opt = catalog::get_table_schema(parse_result.command->table_name);
+                if (!schema_opt) {
+                    return results::ExecutionResult::Error("Table not found: " + parse_result.command->table_name);
+                }
+                for (const auto& col_def : schema_opt->column_definitions) {
+                    headers.push_back(col_def.column_name);
+                }
+            } else {  // This means specific columns were requested.
+                headers = parse_result.command->projection;
+            }
+
+            // 2. Print the headers.
+            for (const auto& header : headers) {
+                std::cout << header << "\t";
+            }
+            std::cout << std::endl;
+
+            while (true) {
+                auto row = plan->next();
+                if (!row) {
+                    break;  // End of results
+                }
+                // Print the row to the console
+                for (const auto& val : *row) {
+                    std::cout << val << "\t";
+                }
+                std::cout << std::endl;
+            }
+            return results::ExecutionResult::Success();  // Indicate success, no data returned here
+        }
         case parser::CommandType::UNKNOWN:
         default:
             return results::ExecutionResult::Error("ERROR: Unknown or unsupported command.");
