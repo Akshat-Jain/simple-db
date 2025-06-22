@@ -20,7 +20,7 @@ namespace simpledb::execution {
     class TableScanOperator : public Operator {
        public:
         // Constructor that initializes the TableScanOperator with a table name.
-        explicit TableScanOperator(const std::string &table_name);
+        explicit TableScanOperator(const std::string& table_name, const std::filesystem::path& data_dir);
 
         // The next method retrieves the next row from the table.
         std::optional<row::Row> next() override;

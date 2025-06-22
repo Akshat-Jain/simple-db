@@ -135,6 +135,7 @@ add_executable(run_tests
         src/execution/table_scan_operator.cpp
         src/execution/projection_operator.cpp
         src/planner.cpp
+        tests/execution/table_scan_operator_test.cpp
 )
 
 # --- Configure 'run_tests' Target ---

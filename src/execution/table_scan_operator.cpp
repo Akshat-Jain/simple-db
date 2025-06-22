@@ -10,8 +10,8 @@
 #include <vector>
 
 namespace simpledb::execution {
-    TableScanOperator::TableScanOperator(const std::string& table_name)
-        : table_heap_(config::get_config().data_dir / (table_name + ".data")), iterator_(table_heap_.begin()) {}
+    TableScanOperator::TableScanOperator(const std::string& table_name, const std::filesystem::path& data_dir)
+        : table_heap_(data_dir / (table_name + ".data")), iterator_(table_heap_.begin()) {}
 
     std::optional<row::Row> TableScanOperator::next() {
         std::optional<std::vector<char>> next = iterator_.next();

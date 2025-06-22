@@ -50,7 +50,7 @@ results::ExecutionResult parse_and_execute(const std::string& query) {
             if (!parse_result) {
                 return results::ExecutionResult::Error(*parse_result.error_message);
             }
-            auto plan = planner::plan_select(*parse_result.command);
+            auto plan = planner::plan_select(*parse_result.command, config::get_config().data_dir);
             while (true) {
                 auto row = plan->next();
                 if (!row) {

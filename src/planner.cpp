@@ -8,9 +8,10 @@
 #include "simpledb/execution/projection_operator.h"
 
 namespace planner {
-    std::unique_ptr<simpledb::execution::Operator> plan_select(const ast::SelectCommand& cmd) {
+    std::unique_ptr<simpledb::execution::Operator> plan_select(const ast::SelectCommand& cmd,
+                                                               const std::filesystem::path& data_dir) {
         // 1. Create the bottom-most operator: the TableScan.
-        auto scan_op = std::make_unique<simpledb::execution::TableScanOperator>(cmd.table_name);
+        auto scan_op = std::make_unique<simpledb::execution::TableScanOperator>(cmd.table_name, data_dir);
 
         // 2. Create the ProjectionOperator, giving it the TableScanOperator as its child.
         // We transfer ownership of the scan_operator using std::move.

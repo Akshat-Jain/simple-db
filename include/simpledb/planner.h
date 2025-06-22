@@ -7,6 +7,7 @@
 
 #include "simpledb/ast/ast.h"
 #include "simpledb/execution/operator.h"
+#include <filesystem>
 #include <memory>
 
 namespace planner {
@@ -15,7 +16,8 @@ namespace planner {
      * @param cmd The abstract syntax tree for the SELECT query.
      * @return A unique_ptr to the root operator of the execution pipeline.
      */
-    std::unique_ptr<simpledb::execution::Operator> plan_select(const ast::SelectCommand& cmd);
+    std::unique_ptr<simpledb::execution::Operator> plan_select(const ast::SelectCommand& cmd,
+                                                               const std::filesystem::path& data_dir);
 }  // namespace planner
 
 #endif  // SIMPLE_DB_PLANNER_H
