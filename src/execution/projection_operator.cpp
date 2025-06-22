@@ -14,13 +14,24 @@ namespace simpledb::execution {
                                            std::unique_ptr<simpledb::execution::Operator> child,
                                            const std::vector<std::string>& projection_columns)
         : table_name_(table_name), child_(std::move(child)), projection_columns_(projection_columns) {
-        catalog::TableSchema table_schema = catalog::get_table_schema(table_name_).value();
+        std::optional<catalog::TableSchema> table_schema_optional = catalog::get_table_schema(table_name_);
+        if (!table_schema_optional) {
+            // Or throw a more specific exception
+            throw std::runtime_error("Table not found in catalog: " + table_name_);
+        }
+
+        const catalog::TableSchema& table_schema = table_schema_optional.value();
         for (const auto& projection_column : projection_columns_) {
+            bool found = false;
             for (size_t j = 0; j < table_schema.column_definitions.size(); ++j) {
                 if (table_schema.column_definitions[j].column_name == projection_column) {
                     projected_column_indices_.push_back(j);
+                    found = true;
                     break;  // Found the column, no need to check further.
                 }
+            }
+            if (!found) {
+                throw std::runtime_error("Projection column not found in table schema: " + projection_column);
             }
         }
     }
