@@ -9,6 +9,7 @@
 #include "simpledb/execution/row.h"
 #include "simpledb/storage/table_heap.h"
 
+#include <filesystem>
 #include <optional>
 #include <string>
 
