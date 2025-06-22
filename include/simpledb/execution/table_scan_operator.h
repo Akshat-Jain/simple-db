@@ -5,10 +5,12 @@
 #ifndef SIMPLE_DB_TABLE_SCAN_OPERATOR_H
 #define SIMPLE_DB_TABLE_SCAN_OPERATOR_H
 
-#include <optional>
 #include "simpledb/execution/operator.h"
 #include "simpledb/execution/row.h"
 #include "simpledb/storage/table_heap.h"
+
+#include <optional>
+#include <string>
 
 namespace simpledb::execution {
     /**
