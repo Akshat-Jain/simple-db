@@ -10,7 +10,7 @@ This is a simple database written in C++. I've read a lot of theory about databa
 **Current state:**
 1. CREATE TABLE, DROP TABLE, SHOW TABLES commands work
 2. INSERT INTO command works, albeit with the limitation that it doesn't support inserting multiple rows at once (yet).
-3. I'm working on implementing the SELECT command currently.
+3. Basic SELECT queries (selecting all or a subset of columns)
 
 **Note:**
 1. This project isn't inspired by any specific database or book.
