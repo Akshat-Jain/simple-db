@@ -128,7 +128,6 @@ add_executable(simple-db
         src/main.cpp
         src/config.cpp
         src/parser.cpp
-        src/utils/stringutils.cpp
         src/history.cpp
         src/catalog.cpp
         src/executor.cpp
@@ -176,7 +175,6 @@ add_executable(run_tests
         # This links their compiled object code into the test executable.
         src/config.cpp
         src/parser.cpp
-        src/utils/stringutils.cpp
         src/catalog.cpp
         src/executor.cpp
         tests/executor_test.cpp

@@ -4,7 +4,6 @@
 
 #include "simpledb/parser.h"
 
-#include "simpledb/utils/stringutils.h"
 #include "ANTLRInputStream.h"
 #include "SimpleDBLexer.h"
 #include "SimpleDBParser.h"
