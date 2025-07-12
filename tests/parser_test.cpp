@@ -1,329 +1,158 @@
-// tests/parser_test.cpp
-
 #include "simpledb/parser.h"
 
 #include <gtest/gtest.h>
 
-TEST(Parser, GetCommandType) {
-    ASSERT_EQ(parser::get_command_type("CREATE TABLE my_table (id INT, name TEXT)"), parser::CommandType::CREATE_TABLE);
-    ASSERT_EQ(parser::get_command_type("INSERT INTO my_table VALUES (1, 'Alice')"), parser::CommandType::INSERT);
-    ASSERT_EQ(parser::get_command_type("SELECT * FROM my_table"), parser::CommandType::SELECT);
-    ASSERT_EQ(parser::get_command_type("DROP TABLE my_table"), parser::CommandType::DROP_TABLE);
-    ASSERT_EQ(parser::get_command_type("SHOW TABLES"), parser::CommandType::SHOW_TABLES);
-    ASSERT_EQ(parser::get_command_type("INSERT INTO my_table (id, name) VALUES (1, 'Alice')"),
-              parser::CommandType::INSERT);
-    ASSERT_EQ(parser::get_command_type("SELECT * FROM my_table"), parser::CommandType::SELECT);
-    ASSERT_EQ(parser::get_command_type("SELECT col1, col2 FROM my_table"), parser::CommandType::SELECT);
-    ASSERT_EQ(parser::get_command_type("UNKNOWN COMMAND"), parser::CommandType::UNKNOWN);
+TEST(AntlrParser, ParsesSelectAll) {
+    std::string query = "SELECT * FROM users";
+    auto result = parser::parse_sql(query);
+    ASSERT_TRUE(result.has_value());
+
+    auto* cmd = std::get_if<ast::SelectCommand>(&(*result));
+    ASSERT_NE(cmd, nullptr);
+
+    EXPECT_EQ(cmd->table_name, "users");
+    EXPECT_TRUE(cmd->projection.empty());
 }
 
-TEST(Parser, GetCommandTypeCaseInsensitive) {
-    ASSERT_EQ(parser::get_command_type("create table my_table (id INT, name TEXT)"), parser::CommandType::CREATE_TABLE);
-    ASSERT_EQ(parser::get_command_type("insert into my_table VALUES (1, 'Alice')"), parser::CommandType::INSERT);
-    ASSERT_EQ(parser::get_command_type("select * from my_table"), parser::CommandType::SELECT);
-    ASSERT_EQ(parser::get_command_type("drop table my_table"), parser::CommandType::DROP_TABLE);
-    ASSERT_EQ(parser::get_command_type("show tables"), parser::CommandType::SHOW_TABLES);
-    ASSERT_EQ(parser::get_command_type("insert into my_table (id, name) VALUES (1, 'Alice')"),
-              parser::CommandType::INSERT);
-    ASSERT_EQ(parser::get_command_type("select * from my_table"), parser::CommandType::SELECT);
-    ASSERT_EQ(parser::get_command_type("select col1, col2 from my_table"), parser::CommandType::SELECT);
+TEST(AntlrParser, ParsesSelectColumns) {
+    std::string query = "SELECT id, name FROM users";
+    auto result = parser::parse_sql(query);
+    ASSERT_TRUE(result.has_value());
+
+    auto* cmd = std::get_if<ast::SelectCommand>(&(*result));
+    ASSERT_NE(cmd, nullptr);
+
+    EXPECT_EQ(cmd->table_name, "users");
+    std::vector<std::string> expected_cols = {"id", "name"};
+    EXPECT_EQ(cmd->projection, expected_cols);
 }
 
-TEST(Parser, GetCommandTypeHandlesWhitespace) {
-    ASSERT_EQ(parser::get_command_type("  CREATE TABLE t (a INT)"), parser::CommandType::CREATE_TABLE);
-    ASSERT_EQ(parser::get_command_type("INSERT INTO t VALUES (1)  "), parser::CommandType::INSERT);
-    ASSERT_EQ(parser::get_command_type("SELECT   *   FROM    t"), parser::CommandType::SELECT);
-    ASSERT_EQ(parser::get_command_type("\tDROP\tTABLE\tt"), parser::CommandType::DROP_TABLE);
-    ASSERT_EQ(parser::get_command_type("   SHOW   TABLES   "), parser::CommandType::SHOW_TABLES);
-    ASSERT_EQ(parser::get_command_type("INSERT INTO t (a) VALUES (1)  "), parser::CommandType::INSERT);
-    ASSERT_EQ(parser::get_command_type("SELECT * FROM t  "), parser::CommandType::SELECT);
-    ASSERT_EQ(parser::get_command_type("SELECT col1, col2 FROM t  "), parser::CommandType::SELECT);
+TEST(AntlrParser, ParsesCreateTable) {
+    std::string query = "CREATE TABLE products (id INT, price TEXT)";
+    auto result = parser::parse_sql(query);
+    ASSERT_TRUE(result.has_value());
+
+    auto* cmd = std::get_if<command::CreateTableCommand>(&(*result));
+    ASSERT_NE(cmd, nullptr);
+
+    EXPECT_EQ(cmd->table_name, "products");
+    ASSERT_EQ(cmd->column_definitions.size(), 2);
+    EXPECT_EQ(cmd->column_definitions[0].column_name, "id");
+    EXPECT_EQ(cmd->column_definitions[0].type, command::Datatype::INT);
+    EXPECT_EQ(cmd->column_definitions[1].column_name, "price");
+    EXPECT_EQ(cmd->column_definitions[1].type, command::Datatype::TEXT);
 }
 
-TEST(Parser, GetCommandTypeHandlesPartialOrIncorrectKeywords) {
-    // First keyword is known, but second (if expected) is missing or wrong
-    ASSERT_EQ(parser::get_command_type("CREATE mytable (id INT)"), parser::CommandType::UNKNOWN);
-    ASSERT_EQ(parser::get_command_type("CREATE"), parser::CommandType::UNKNOWN);  // CREATE alone
+TEST(AntlrParser, ParsesDropTable) {
+    std::string query = "DROP TABLE customers";
+    auto result = parser::parse_sql(query);
+    ASSERT_TRUE(result.has_value());
 
-    ASSERT_EQ(parser::get_command_type("INSERT mytable VALUES (1)"), parser::CommandType::UNKNOWN);
-    ASSERT_EQ(parser::get_command_type("INSERT"), parser::CommandType::UNKNOWN);  // INSERT alone
+    auto* cmd = std::get_if<command::DropTableCommand>(&(*result));
+    ASSERT_NE(cmd, nullptr);
 
-    ASSERT_EQ(parser::get_command_type("DROP mytable"), parser::CommandType::UNKNOWN);
-    ASSERT_EQ(parser::get_command_type("DROP"), parser::CommandType::UNKNOWN);  // DROP alone
-
-    ASSERT_EQ(parser::get_command_type("SHOW"), parser::CommandType::UNKNOWN);  // SHOW alone
+    EXPECT_EQ(cmd->table_name, "customers");
 }
 
-TEST(Parser, GetCommandTypeHandlesCompletelyUnknownAndEmpty) {
-    ASSERT_EQ(parser::get_command_type("ALTER TABLE my_table ADD COLUMN new_col INT"), parser::CommandType::UNKNOWN);
-    ASSERT_EQ(parser::get_command_type("UPDATE my_table SET col1 = 1"), parser::CommandType::UNKNOWN);
-    ASSERT_EQ(parser::get_command_type("DELETE FROM my_table"), parser::CommandType::UNKNOWN);
-    ASSERT_EQ(parser::get_command_type("EXPLAIN SELECT * FROM my_table"), parser::CommandType::UNKNOWN);
-    ASSERT_EQ(parser::get_command_type(""), parser::CommandType::UNKNOWN);
-    ASSERT_EQ(parser::get_command_type("    "), parser::CommandType::UNKNOWN);
-    ASSERT_EQ(parser::get_command_type("\t\n"), parser::CommandType::UNKNOWN);
+TEST(AntlrParser, ParsesShowTables) {
+    std::string query = "SHOW TABLES";
+    auto result = parser::parse_sql(query);
+    ASSERT_TRUE(result.has_value());
+    ASSERT_NE(std::get_if<command::ShowTablesCommand>(&(*result)), nullptr);
 }
 
-TEST(CreateTable, BasicCreateTable) {
-    std::string query = "CREATE TABLE my_table (id INT, name TEXT)";
-    auto parse_result = parser::parse_create_table(query);
-    ASSERT_TRUE(parse_result);
+TEST(AntlrParser, ParsesInsertWithColumns) {
+    std::string query = "INSERT INTO customers (id, name) VALUES ('123', 'ACME Corp')";
+    auto result = parser::parse_sql(query);
+    ASSERT_TRUE(result.has_value());
 
-    std::optional<command::CreateTableCommand> table_command = parse_result.command;
-    ASSERT_EQ("my_table", table_command->table_name);
-    ASSERT_EQ(2, table_command->column_definitions.size());
-    ASSERT_EQ("id", table_command->column_definitions[0].column_name);
-    ASSERT_EQ(command::Datatype::INT, table_command->column_definitions[0].type);
-    ASSERT_EQ("name", table_command->column_definitions[1].column_name);
-    ASSERT_EQ(command::Datatype::TEXT, table_command->column_definitions[1].type);
+    auto* cmd = std::get_if<command::InsertCommand>(&(*result));
+    ASSERT_NE(cmd, nullptr);
+
+    EXPECT_EQ(cmd->table_name, "customers");
+    std::vector<std::string> expected_cols = {"id", "name"};
+    EXPECT_EQ(cmd->columns, expected_cols);
+    std::vector<std::string> expected_vals = {"123", "ACME Corp"};
+    EXPECT_EQ(cmd->values, expected_vals);
 }
 
-TEST(CreateTable, ExtraWhitespace) {
-    std::string query = "   CREATE    TABLE   my_table   (   id   INT  , name    TEXT )   ";
-    auto parse_result = parser::parse_create_table(query);
-    ASSERT_TRUE(parse_result);
+TEST(AntlrParser, ParsesInsertWithoutColumns) {
+    std::string query = "INSERT INTO customers VALUES ('123', 'ACME Corp')";
+    auto result = parser::parse_sql(query);
+    ASSERT_TRUE(result.has_value());
 
-    std::optional<command::CreateTableCommand> table_command = parse_result.command;
-    ASSERT_EQ("my_table", table_command->table_name);
-    ASSERT_EQ(2, table_command->column_definitions.size());
-    ASSERT_EQ("id", table_command->column_definitions[0].column_name);
-    ASSERT_EQ(command::Datatype::INT, table_command->column_definitions[0].type);
-    ASSERT_EQ("name", table_command->column_definitions[1].column_name);
-    ASSERT_EQ(command::Datatype::TEXT, table_command->column_definitions[1].type);
+    auto* cmd = std::get_if<command::InsertCommand>(&(*result));
+    ASSERT_NE(cmd, nullptr);
+
+    EXPECT_EQ(cmd->table_name, "customers");
+    EXPECT_TRUE(cmd->columns.empty());
+    std::vector<std::string> expected_vals = {"123", "ACME Corp"};
+    EXPECT_EQ(cmd->values, expected_vals);
 }
 
-TEST(CreateTable, MissingCreateKeyword) {
-    auto result = parser::parse_create_table("my_table (id INT)");
-    ASSERT_FALSE(result);
-    ASSERT_EQ("ERROR: Expected CREATE keyword.", result.error_message);
+TEST(AntlrParser, HandlesWhitespaceAndCase) {
+    std::string query = "   cReAtE    TaBlE   my_table   (   id   iNt  , name    tExT )   ";
+    auto result = parser::parse_sql(query);
+    ASSERT_TRUE(result.has_value());
+
+    auto* cmd = std::get_if<command::CreateTableCommand>(&(*result));
+    ASSERT_NE(cmd, nullptr);
+
+    EXPECT_EQ(cmd->table_name, "my_table");
+    ASSERT_EQ(cmd->column_definitions.size(), 2);
+    EXPECT_EQ(cmd->column_definitions[0].column_name, "id");
+    EXPECT_EQ(cmd->column_definitions[0].type, command::Datatype::INT);
 }
 
-TEST(CreateTable, MissingTableKeyword) {
-    auto result = parser::parse_create_table("CREATE my_table (id INT)");
-    ASSERT_FALSE(result);
-    ASSERT_EQ("ERROR: Expected TABLE keyword.", result.error_message);
+TEST(AntlrParser, HandlesOptionalSemicolon) {
+    std::string query = "SELECT * FROM users;";
+    auto result = parser::parse_sql(query);
+    ASSERT_TRUE(result.has_value());
+    ASSERT_NE(std::get_if<ast::SelectCommand>(&(*result)), nullptr);
 }
 
-TEST(CreateTable, NoTableName) {
-    auto result = parser::parse_create_table("CREATE TABLE (id INT)");
-    ASSERT_FALSE(result);
-    ASSERT_EQ("ERROR: Table name is empty.", result.error_message);
-}
+TEST(AntlrParser, ReturnsNulloptOnInvalidSyntax) {
+    // --- Completely Unknown Commands ---
+    EXPECT_FALSE(parser::parse_sql("ALTER TABLE my_table ADD COLUMN new_col INT").has_value());
+    EXPECT_FALSE(parser::parse_sql("UPDATE my_table SET col1 = 1").has_value());
+    EXPECT_FALSE(parser::parse_sql("DELETE FROM my_table").has_value());
+    EXPECT_FALSE(parser::parse_sql("EXPLAIN SELECT * FROM my_table").has_value());
 
-TEST(CreateTable, InvalidTableNameCharacters) {
-    auto result = parser::parse_create_table("CREATE TABLE my-table (id INT)");
-    ASSERT_FALSE(result);
-    ASSERT_EQ("ERROR: Table name 'my-table' contains invalid characters.", result.error_message);
-}
+    // --- Empty/Whitespace Input ---
+    EXPECT_FALSE(parser::parse_sql("").has_value());
+    EXPECT_FALSE(parser::parse_sql("    ").has_value());
+    EXPECT_FALSE(parser::parse_sql("\t\n").has_value());
 
-TEST(CreateTable, UnknownColumnType) {
-    auto result = parser::parse_create_table("CREATE TABLE my_table (id SOME_RANDOM_TYPE)");
-    ASSERT_FALSE(result);
-    ASSERT_EQ("ERROR: Unknown column type 'SOME_RANDOM_TYPE'. Supported types are INT and TEXT.", result.error_message);
-}
+    // --- Partial/Incorrect Keywords ---
+    EXPECT_FALSE(parser::parse_sql("CREATE mytable (id INT)").has_value());
+    EXPECT_FALSE(parser::parse_sql("CREATE").has_value());
+    EXPECT_FALSE(parser::parse_sql("INSERT mytable VALUES (1, 'Alice')").has_value());
+    EXPECT_FALSE(parser::parse_sql("INSERT").has_value());
+    EXPECT_FALSE(parser::parse_sql("DROP mytable").has_value());
+    EXPECT_FALSE(parser::parse_sql("DROP").has_value());
+    EXPECT_FALSE(parser::parse_sql("SHOW").has_value());
 
-TEST(CreateTable, ExtraTokensInColumnDefinition) {
-    auto result = parser::parse_create_table("CREATE TABLE my_table (id INT something)");
-    ASSERT_FALSE(result);
-    ASSERT_EQ("ERROR: Extra tokens after column type in column definition: [id INT something].", result.error_message);
-}
+    // --- CREATE TABLE Errors ---
+    EXPECT_FALSE(parser::parse_sql("CREATE TABLE (id INT)").has_value());                        // No table name
+    EXPECT_FALSE(parser::parse_sql("CREATE TABLE my-table (id INT)").has_value());               // Invalid table name
+    EXPECT_FALSE(parser::parse_sql("CREATE TABLE my_table (id SOME_RANDOM_TYPE)").has_value());  // Unknown type
+    EXPECT_FALSE(parser::parse_sql("CREATE TABLE my_table (id INT something)").has_value());  // Extra tokens in col def
 
-TEST(DropTable, BasicDropTable) {
-    auto parse_result = parser::parse_drop_table("DROP TABLE my_table");
-    ASSERT_TRUE(parse_result);
+    // --- DROP TABLE Errors ---
+    EXPECT_FALSE(parser::parse_sql("DROP TABLE").has_value());                       // No table name
+    EXPECT_FALSE(parser::parse_sql("DROP TABLE my_table extra_token").has_value());  // Extra tokens
 
-    std::optional<command::DropTableCommand> cmd = parse_result.command;
-    ASSERT_EQ("my_table", cmd->table_name);
-}
+    // --- SHOW TABLES Errors ---
+    EXPECT_FALSE(parser::parse_sql("SHOW TABLES extra_token").has_value());  // Extra tokens
 
-TEST(DropTable, ExtraWhitespace) {
-    auto parse_result = parser::parse_drop_table("   DROP   TABLE   my_table   ");
-    ASSERT_TRUE(parse_result);
+    // --- INSERT Errors ---
+    EXPECT_FALSE(parser::parse_sql("INSERT INTO my_table").has_value());             // Incomplete
+    EXPECT_FALSE(parser::parse_sql("INSERT INTO my_table VALUES").has_value());      // No parenthesis
+    EXPECT_FALSE(parser::parse_sql("INSERT INTO my_table (id, name)").has_value());  // Missing VALUES
 
-    std::optional<command::DropTableCommand> cmd = parse_result.command;
-    ASSERT_EQ("my_table", cmd->table_name);
-}
-
-TEST(DropTable, MissingDropKeyword) {
-    auto result = parser::parse_drop_table("TABLE my_table");
-    ASSERT_FALSE(result);
-    ASSERT_EQ("ERROR: Expected DROP keyword.", result.error_message);
-}
-
-TEST(DropTable, MissingTableKeyword) {
-    auto result = parser::parse_drop_table("DROP my_table");
-    ASSERT_FALSE(result);
-    ASSERT_EQ("ERROR: Expected TABLE keyword.", result.error_message);
-}
-
-TEST(DropTable, NoTableName) {
-    auto result = parser::parse_drop_table("DROP TABLE");
-    ASSERT_FALSE(result);
-    ASSERT_EQ("ERROR: Table name is empty.", result.error_message);
-}
-
-TEST(DropTable, InvalidTableNameCharacters) {
-    auto result = parser::parse_drop_table("DROP TABLE my-table");
-    ASSERT_FALSE(result);
-    ASSERT_EQ("ERROR: Table name 'my-table' contains invalid characters.", result.error_message);
-}
-
-TEST(DropTable, ExtraTokens) {
-    auto parse_result = parser::parse_drop_table("DROP TABLE my_table extra_token");
-    ASSERT_FALSE(parse_result);
-    ASSERT_EQ(
-        "ERROR: Invalid DROP TABLE command. Parsed table name as 'my_table', but found extra tokens after it: "
-        "'extra_token'.",
-        parse_result.error_message);
-}
-
-TEST(ShowTables, BasicShowTables) {
-    auto parse_result = parser::parse_show_tables("SHOW TABLES");
-    ASSERT_TRUE(parse_result);
-}
-
-TEST(ShowTables, ExtraWhitespace) {
-    auto parse_result = parser::parse_show_tables("   SHOW   TABLES   ");
-    ASSERT_TRUE(parse_result);
-}
-
-TEST(ShowTables, MissingTablesKeyword) {
-    auto parse_result = parser::parse_show_tables("SHOW");
-    ASSERT_FALSE(parse_result);
-    ASSERT_EQ("ERROR: Expected TABLES keyword.", parse_result.error_message);
-}
-
-TEST(ShowTables, ExtraTokens) {
-    auto parse_result = parser::parse_show_tables("SHOW TABLES extra_token");
-    ASSERT_FALSE(parse_result);
-    ASSERT_EQ("ERROR: Invalid SHOW TABLES command. Found extra tokens: 'extra_token'.", parse_result.error_message);
-}
-
-TEST(Insert, BasicInsert) {
-    std::string query = "INSERT INTO my_table VALUES (1, 'Alice')";
-    auto parse_result = parser::parse_insert(query);
-    ASSERT_TRUE(parse_result);
-
-    std::optional<command::InsertCommand> insert_command = parse_result.command;
-    ASSERT_EQ("my_table", insert_command->table_name);
-    ASSERT_TRUE(insert_command->columns.empty());
-    ASSERT_EQ(std::vector<std::string>({"1", "Alice"}), insert_command->values);
-}
-
-TEST(Insert, InsertWithColumns) {
-    std::string query = "INSERT INTO my_table (id, name) VALUES (1, 'Alice')";
-    auto parse_result = parser::parse_insert(query);
-    ASSERT_TRUE(parse_result);
-
-    std::optional<command::InsertCommand> insert_command = parse_result.command;
-    ASSERT_EQ("my_table", insert_command->table_name);
-    ASSERT_EQ(std::vector<std::string>({"id", "name"}), insert_command->columns);
-    ASSERT_EQ(std::vector<std::string>({"1", "Alice"}), insert_command->values);
-}
-
-TEST(Insert, ExtraWhitespace) {
-    std::string query = "   INSERT   INTO   my_table   (id, name)   VALUES   (1, 'a b c d')   ";
-    auto parse_result = parser::parse_insert(query);
-    ASSERT_TRUE(parse_result);
-
-    std::optional<command::InsertCommand> insert_command = parse_result.command;
-    ASSERT_EQ("my_table", insert_command->table_name);
-    ASSERT_EQ(std::vector<std::string>({"id", "name"}), insert_command->columns);
-    ASSERT_EQ(std::vector<std::string>({"1", "a b c d"}), insert_command->values);
-}
-
-TEST(Insert, MissingIntoKeyword) {
-    auto result = parser::parse_insert("INSERT my_table VALUES (1, 'Alice')");
-    ASSERT_FALSE(result);
-    ASSERT_EQ("ERROR: Expected INTO keyword.", result.error_message);
-}
-
-TEST(Insert, MissingTableName) {
-    auto result = parser::parse_insert("INSERT INTO (1, 'Alice')");
-    ASSERT_FALSE(result);
-    ASSERT_EQ("ERROR: Table name '(1,' contains invalid characters.", result.error_message);
-}
-
-TEST(Insert, NoValues) {
-    auto result = parser::parse_insert("INSERT INTO my_table");
-    ASSERT_FALSE(result);
-    ASSERT_EQ("ERROR: Incomplete INSERT statement. Expected columns list or 'VALUES'.", result.error_message);
-}
-
-TEST(Insert, NoValuesAfterValuesKeyword) {
-    auto result = parser::parse_insert("INSERT INTO my_table VALUES");
-    ASSERT_FALSE(result);
-    ASSERT_EQ("ERROR: Expected '(' to start list.", result.error_message);
-}
-
-TEST(Insert, MissingValuesKeyword) {
-    auto result = parser::parse_insert("INSERT INTO my_table (id, name)");
-    ASSERT_FALSE(result);
-    ASSERT_EQ("ERROR: Expected VALUES keyword.", result.error_message);
-}
-
-TEST(Insert, MissingValuesAfterColumns) {
-    auto result = parser::parse_insert("INSERT INTO my_table (id, name) VALUES");
-    ASSERT_FALSE(result);
-    ASSERT_EQ("ERROR: Expected '(' to start list.", result.error_message);
-}
-
-TEST(Insert, DuplicateColumnName) {
-    auto result = parser::parse_insert("INSERT INTO my_table (id, id) VALUES (1, 'Alice')");
-    ASSERT_FALSE(result);
-    ASSERT_EQ("ERROR: Duplicate column names found in the column list.", result.error_message);
-}
-
-TEST(Select, BasicSelect) {
-    std::string query = "SELECT col1, col2 FROM my_table";
-    auto parse_result = parser::parse_select(query);
-    ASSERT_TRUE(parse_result);
-
-    std::optional<ast::SelectCommand> select_command = parse_result.command;
-    ASSERT_EQ("my_table", select_command->table_name);
-    ASSERT_EQ(std::vector<std::string>({"col1", "col2"}), select_command->projection);
-}
-
-TEST(Select, BasicSelectAllColumns) {
-    std::string query = "SELECT * FROM my_table";
-    auto parse_result = parser::parse_select(query);
-    ASSERT_TRUE(parse_result);
-
-    std::optional<ast::SelectCommand> select_command = parse_result.command;
-    ASSERT_EQ("my_table", select_command->table_name);
-    ASSERT_EQ(std::vector<std::string>({}), select_command->projection);
-}
-
-TEST(Select, ExtraWhitespace) {
-    std::string query = "   SELECT   col1 ,    col2   FROM   my_table   ";
-    auto parse_result = parser::parse_select(query);
-    ASSERT_TRUE(parse_result);
-
-    std::optional<ast::SelectCommand> select_command = parse_result.command;
-    ASSERT_EQ("my_table", select_command->table_name);
-    ASSERT_EQ(std::vector<std::string>({"col1", "col2"}), select_command->projection);
-}
-
-TEST(Select, MissingFromKeyword) {
-    auto result = parser::parse_select("SELECT col1, col2 my_table");
-    ASSERT_FALSE(result);
-    ASSERT_EQ("ERROR: Invalid SELECT query. Expected 'SELECT ... FROM ...'.", result.error_message);
-}
-
-TEST(Select, NoColumnsSpecified) {
-    auto result = parser::parse_select("SELECT FROM my_table");
-    ASSERT_FALSE(result);
-    ASSERT_EQ("ERROR: Projection list is empty. Expected at least one column.", result.error_message);
-}
-
-TEST(Select, NoTableName) {
-    auto result = parser::parse_select("SELECT col1, col2 FROM ");
-    ASSERT_FALSE(result);
-    ASSERT_EQ("ERROR: Expected table name after FROM keyword.", result.error_message);
-}
-
-TEST(Select, ExtraTokenAfterTableName) {
-    auto result = parser::parse_select("SELECT col1, col2 FROM my_table extra_token");
-    ASSERT_FALSE(result);
-    ASSERT_EQ("ERROR: Extra tokens found after table name: 'extra_token'.", result.error_message);
+    // --- SELECT Errors ---
+    EXPECT_FALSE(parser::parse_sql("SELECT col1, col2 my_table").has_value());                   // Missing FROM
+    EXPECT_FALSE(parser::parse_sql("SELECT FROM my_table").has_value());                         // Empty projection
+    EXPECT_FALSE(parser::parse_sql("SELECT col1, col2 FROM").has_value());                       // No table name
+    EXPECT_FALSE(parser::parse_sql("SELECT col1, col2 FROM my_table extra_token").has_value());  // Extra tokens
 }

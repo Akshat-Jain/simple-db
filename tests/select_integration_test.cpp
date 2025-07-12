@@ -51,10 +51,11 @@ class SelectIntegrationTest : public ::testing::Test {
 
 TEST_F(SelectIntegrationTest, SelectAllColumns) {
     std::string query = "SELECT * FROM test_table";
-    auto parse_result = parser::parse_select(query);
-    ASSERT_TRUE(parse_result);
+    auto parse_result = parser::parse_sql(query);
+    ASSERT_TRUE(parse_result.has_value());
 
-    auto select_command = parse_result.command;
+    auto* select_command = std::get_if<ast::SelectCommand>(&(*parse_result));
+    ASSERT_TRUE(select_command != nullptr);
 
     // Create the execution plan.
     auto operator_plan = planner::plan_select(*select_command, test_data_dir);
@@ -79,10 +80,11 @@ TEST_F(SelectIntegrationTest, SelectAllColumns) {
 
 TEST_F(SelectIntegrationTest, SelectSomeColumns) {
     std::string query = "SELECT id, name FROM test_table";
-    auto parse_result = parser::parse_select(query);
-    ASSERT_TRUE(parse_result);
+    auto parse_result = parser::parse_sql(query);
+    ASSERT_TRUE(parse_result.has_value());
 
-    auto select_command = parse_result.command;
+    auto* select_command = std::get_if<ast::SelectCommand>(&(*parse_result));
+    ASSERT_TRUE(select_command != nullptr);
 
     // Create the execution plan.
     auto operator_plan = planner::plan_select(*select_command, test_data_dir);

@@ -5,6 +5,7 @@
 #include <iostream>
 #include <readline/readline.h>
 #include <readline/history.h>
+#include <variant>
 
 #include "simpledb/history.h"
 #include "simpledb/config.h"
@@ -15,84 +16,67 @@
 #include "simpledb/planner.h"
 
 results::ExecutionResult parse_and_execute(const std::string& query) {
-    parser::CommandType command_type = parser::get_command_type(query);
-    switch (command_type) {
-        case parser::CommandType::CREATE_TABLE: {
-            auto parse_result = parser::parse_create_table(query);
-            if (!parse_result) {
-                return results::ExecutionResult::Error(*parse_result.error_message);
-            }
-            return executor::execute_create_table_command(*parse_result.command, config::get_config().data_dir);
+    try {
+        auto parse_result = parser::parse_sql(query);
+
+        if (!parse_result) {
+            return results::ExecutionResult::Error("Invalid SQL syntax.");
         }
-        case parser::CommandType::DROP_TABLE: {
-            auto parse_result = parser::parse_drop_table(query);
-            if (!parse_result) {
-                return results::ExecutionResult::Error(*parse_result.error_message);
-            }
-            return executor::execute_drop_table_command(*parse_result.command, config::get_config().data_dir);
+
+        // Check if the variant holds a CreateTableCommand
+        if (auto* cmd = std::get_if<command::CreateTableCommand>(&(*parse_result))) {
+            return executor::execute_create_table_command(*cmd, config::get_config().data_dir);
         }
-        case parser::CommandType::SHOW_TABLES: {
-            auto parse_result = parser::parse_show_tables(query);
-            if (!parse_result) {
-                return results::ExecutionResult::Error(*parse_result.error_message);
-            }
+
+        // Check if it holds a DropTableCommand
+        if (auto* cmd = std::get_if<command::DropTableCommand>(&(*parse_result))) {
+            return executor::execute_drop_table_command(*cmd, config::get_config().data_dir);
+        }
+
+        // Check if it holds an InsertCommand
+        if (auto* cmd = std::get_if<command::InsertCommand>(&(*parse_result))) {
+            return executor::execute_insert_command(*cmd, config::get_config().data_dir);
+        }
+
+        // Check if it holds a ShowTablesCommand
+        if (auto* cmd = std::get_if<command::ShowTablesCommand>(&(*parse_result))) {
             return executor::execute_show_tables_command();
         }
-        case parser::CommandType::INSERT: {
-            auto parse_result = parser::parse_insert(query);
-            if (!parse_result) {
-                return results::ExecutionResult::Error(*parse_result.error_message);
-            }
-            return executor::execute_insert_command(*parse_result.command, config::get_config().data_dir);
-        }
-        case parser::CommandType::SELECT: {
-            auto parse_result = parser::parse_select(query);
-            if (!parse_result) {
-                return results::ExecutionResult::Error(*parse_result.error_message);
-            }
-            std::unique_ptr<simpledb::execution::Operator> plan;
-            try {
-                plan = planner::plan_select(*parse_result.command, config::get_config().data_dir);
-            } catch (const std::exception& e) {
-                return results::ExecutionResult::Error(e.what());
-            }
 
+        // Check if it holds a SelectCommand
+        if (auto* cmd = std::get_if<ast::SelectCommand>(&(*parse_result))) {
+            auto plan = planner::plan_select(*cmd, config::get_config().data_dir);
+
+            // Print headers
             std::vector<std::string> headers;
-            if (parse_result.command->projection.empty()) {
-                // This means SELECT *, so we get all column names from the catalog.
-                auto schema_opt = catalog::get_table_schema(parse_result.command->table_name);
-                if (!schema_opt) {
-                    return results::ExecutionResult::Error("Table not found: " + parse_result.command->table_name);
-                }
-                for (const auto& col_def : schema_opt->column_definitions) {
+            if (cmd->projection.empty()) {  // SELECT *
+                auto schema = catalog::get_table_schema(cmd->table_name).value();
+                for (const auto& col_def : schema.column_definitions) {
                     headers.push_back(col_def.column_name);
                 }
-            } else {  // This means specific columns were requested.
-                headers = parse_result.command->projection;
+            } else {
+                headers = cmd->projection;
             }
-
-            // 2. Print the headers.
             for (const auto& header : headers) {
                 std::cout << header << "\t";
             }
             std::cout << std::endl;
 
-            while (true) {
-                auto row = plan->next();
-                if (!row) {
-                    break;  // End of results
-                }
-                // Print the row to the console
+            // Execute plan and print rows
+            while (auto row = plan->next()) {
                 for (const auto& val : *row) {
                     std::cout << val << "\t";
                 }
                 std::cout << std::endl;
             }
-            return results::ExecutionResult::Success();  // Indicate success, no data returned here
+            return results::ExecutionResult::Success();
         }
-        case parser::CommandType::UNKNOWN:
-        default:
-            return results::ExecutionResult::Error("ERROR: Unknown or unsupported command.");
+
+        // If it's none of the above, something is wrong.
+        return results::ExecutionResult::Error("Unsupported command type.");
+
+    } catch (const std::exception& e) {
+        return results::ExecutionResult::Error(e.what());
     }
 }
 
