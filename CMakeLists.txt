@@ -19,18 +19,15 @@ add_compile_options(${UNUSED_WARN_FLAGS}) # Add to all targets
 # Enable Testing with CTest
 #-----------------------------------------------------------------------------
 enable_testing()
-
-
-include(FetchContent) # Include module for fetching dependencies
+include(FetchContent)
 
 #-----------------------------------------------------------------------------
 # GoogleTest Dependency
 #-----------------------------------------------------------------------------
 FetchContent_Declare(
         googletest
-        # Specify the Git repository and a stable tag or commit hash
         GIT_REPOSITORY https://github.com/google/googletest.git
-        GIT_TAG        v1.16.0 # Or choose the latest stable release tag
+        GIT_TAG        v1.16.0
 )
 FetchContent_MakeAvailable(googletest)
 
@@ -40,7 +37,7 @@ FetchContent_MakeAvailable(googletest)
 FetchContent_Declare(
         spdlog
         GIT_REPOSITORY https://github.com/gabime/spdlog.git
-        GIT_TAG        v1.13.0        # or whatever latest stable
+        GIT_TAG        v1.13.0
 )
 FetchContent_MakeAvailable(spdlog)
 
@@ -50,18 +47,78 @@ FetchContent_MakeAvailable(spdlog)
 FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.12.0/json.tar.xz)
 FetchContent_MakeAvailable(json)
 
-# --- Use PkgConfig to find Readline ---
-# Find the pkg-config utility itself. CMake needs this to run pkg-config.
-find_package(PkgConfig REQUIRED)
+#-----------------------------------------------------------------------------
+# ANTLR Integration
+#-----------------------------------------------------------------------------
 
-# Use pkg-config to check for the 'readline' module.
-# This will search for 'readline.pc' using the PKG_CONFIG_PATH.
-# If found, it defines variables like:
-#   READLINE_FOUND
-#   READLINE_INCLUDE_DIRS (path(s) for -I flags)
-#   READLINE_LIBRARIES    (library name(s) for linking, e.g., -lreadline)
-#   READLINE_LIBRARY_DIRS (path(s) for -L flags)
-# REQUIRED makes CMake fail if readline is not found via pkg-config.
+# 1. Fetch the ANTLR C++ runtime library source code from Git.
+FetchContent_Declare(
+        antlr4_runtime_source
+        GIT_REPOSITORY https://github.com/antlr/antlr4.git
+        GIT_TAG        4.13.1
+)
+FetchContent_MakeAvailable(antlr4_runtime_source)
+# The C++ runtime's CMakeLists.txt is in a subdirectory. Add it to our build.
+add_subdirectory(
+        ${antlr4_runtime_source_SOURCE_DIR}/runtime/Cpp
+        ${antlr4_runtime_source_BINARY_DIR}/runtime
+)
+
+# Manually add the ANTLR runtime's include directory to the main include path.
+# This ensures that when compiling the generated sources, the compiler can find 'antlr4-runtime.h'.
+include_directories(${antlr4_runtime_source_SOURCE_DIR}/runtime/Cpp/runtime/src)
+
+# 2. Download the ANTLR generator JAR using a direct command.
+set(ANTLR_JAR ${CMAKE_CURRENT_BINARY_DIR}/antlr4-4.13.1-complete.jar)
+file(DOWNLOAD
+        https://repo1.maven.org/maven2/org/antlr/antlr4/4.13.1/antlr4-4.13.1-complete.jar
+        ${ANTLR_JAR}
+        EXPECTED_HASH SHA256=bc13a9c57a8dd7d5196888211e5ede657cb64a3ce968608697e4f668251a8487
+        TLS_VERIFY ON
+)
+
+# 3. Find a Java installation on the build machine.
+find_package(Java REQUIRED)
+
+# 4. Define paths and output directory for generated parser files.
+set(ANTLR_GRAMMAR ${CMAKE_SOURCE_DIR}/src/parser/antlr/SimpleDB.g4)
+set(ANTLR_OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR}/generated/antlr)
+
+# 5. List the files that ANTLR will generate.
+set(ANTLR_GENERATED_SOURCES
+        ${ANTLR_OUTPUT_DIR}/SimpleDBLexer.cpp
+        ${ANTLR_OUTPUT_DIR}/SimpleDBParser.cpp
+        ${ANTLR_OUTPUT_DIR}/SimpleDBBaseVisitor.cpp
+)
+set(ANTLR_GENERATED_HEADERS
+        ${ANTLR_OUTPUT_DIR}/SimpleDBLexer.h
+        ${ANTLR_OUTPUT_DIR}/SimpleDBParser.h
+        ${ANTLR_OUTPUT_DIR}/SimpleDBBaseVisitor.h
+        ${ANTLR_OUTPUT_DIR}/SimpleDBVisitor.h
+)
+
+# 6. Define the custom command that runs the ANTLR tool to generate C++ files.
+add_custom_command(
+        OUTPUT  ${ANTLR_GENERATED_SOURCES} ${ANTLR_GENERATED_HEADERS}
+        COMMAND ${Java_JAVA_EXECUTABLE} -jar ${ANTLR_JAR}
+        -Dlanguage=Cpp
+        -o ${ANTLR_OUTPUT_DIR}
+        -visitor
+        -Xexact-output-dir
+        ${ANTLR_GRAMMAR}
+        DEPENDS ${ANTLR_GRAMMAR} ${ANTLR_JAR}
+        COMMENT "Generating C++ sources from ANTLR grammar..."
+)
+
+# 7. Create a custom target to ensure the generation step is triggered.
+add_custom_target(AntlrGeneratedSources DEPENDS ${ANTLR_GENERATED_SOURCES})
+
+# 8. Add the generated directory to the include path for all subsequent targets.
+include_directories(${ANTLR_OUTPUT_DIR})
+
+
+# --- Use PkgConfig to find Readline ---
+find_package(PkgConfig REQUIRED)
 pkg_check_modules(READLINE REQUIRED readline)
 # ------------------------------------
 
@@ -82,36 +139,27 @@ add_executable(simple-db
         src/execution/table_scan_operator.cpp
         src/execution/projection_operator.cpp
         src/planner.cpp
+        ${ANTLR_GENERATED_SOURCES}
 )
+add_dependencies(simple-db AntlrGeneratedSources)
 
 # --- Link the executable against Readline using pkg-config variables ---
-
-# This tells CMake to add the 'include' directory to the search path
-# for headers when compiling the 'simple-db' target.
-# This allows `#include "simpledb/config.h"` to work.
-# Use PRIVATE since only this target needs it directly for compilation.
-# ${CMAKE_CURRENT_SOURCE_DIR} is the directory containing this CMakeLists.txt
 target_include_directories(simple-db PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${READLINE_INCLUDE_DIRS}
 )
 
-# Add the include directories provided by pkg-config to the target's include paths.
-# This allows your code to find <readline/readline.h> etc.
-target_include_directories(simple-db PRIVATE ${READLINE_INCLUDE_DIRS})
-
-# Link the target against the libraries specified by pkg-config.
-# This handles the -L and -l flags needed by the linker.
 target_link_libraries(
         simple-db PRIVATE
         ${READLINE_LIBRARIES}
         spdlog::spdlog
         nlohmann_json::nlohmann_json
+        antlr4_static
 )
 
 #-----------------------------------------------------------------------------
 # Unit Test Definition
 #-----------------------------------------------------------------------------
-# Define the test executable target
 add_executable(run_tests
         tests/parser_test.cpp
         tests/catalog_test.cpp
@@ -138,7 +186,9 @@ add_executable(run_tests
         src/execution/table_scan_operator.cpp
         src/execution/projection_operator.cpp
         src/planner.cpp
+        ${ANTLR_GENERATED_SOURCES}
 )
+add_dependencies(run_tests AntlrGeneratedSources)
 
 # --- Configure 'run_tests' Target ---
 target_include_directories(
@@ -153,6 +203,7 @@ target_link_libraries(
         GTest::gtest_main
         spdlog::spdlog
         nlohmann_json::nlohmann_json
+        antlr4_static
 )
 
 # Discover and add tests to CTest automatically
