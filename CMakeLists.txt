@@ -139,6 +139,7 @@ add_executable(simple-db
         src/execution/table_scan_operator.cpp
         src/execution/projection_operator.cpp
         src/planner.cpp
+        src/parser/ast_builder_visitor.cpp
         ${ANTLR_GENERATED_SOURCES}
 )
 add_dependencies(simple-db AntlrGeneratedSources)
@@ -186,6 +187,7 @@ add_executable(run_tests
         src/execution/table_scan_operator.cpp
         src/execution/projection_operator.cpp
         src/planner.cpp
+        src/parser/ast_builder_visitor.cpp
         ${ANTLR_GENERATED_SOURCES}
 )
 add_dependencies(run_tests AntlrGeneratedSources)
