@@ -14,6 +14,73 @@ TEST(AntlrParser, ParsesSelectAll) {
     EXPECT_TRUE(cmd->projection.empty());
 }
 
+TEST(AntlrParser, ParsesSelectWithDoubleQuotedTableName_1) {
+    std::string query = "SELECT * FROM \"users\"";
+    auto result = parser::parse_sql(query);
+    ASSERT_TRUE(result.has_value());
+
+    auto* cmd = std::get_if<ast::SelectCommand>(&(*result));
+    ASSERT_NE(cmd, nullptr);
+
+    EXPECT_EQ(cmd->table_name, "\"users\"");
+    EXPECT_TRUE(cmd->projection.empty());
+}
+
+TEST(AntlrParser, ParsesSelectWithDoubleQuotedTableName_2) {
+    std::string query = "SELECT * FROM \"123users\"";
+    auto result = parser::parse_sql(query);
+    ASSERT_TRUE(result.has_value());
+
+    auto* cmd = std::get_if<ast::SelectCommand>(&(*result));
+    ASSERT_NE(cmd, nullptr);
+
+    EXPECT_EQ(cmd->table_name, "\"123users\"");
+    EXPECT_TRUE(cmd->projection.empty());
+}
+
+TEST(AntlrParser, ParsesSelectWithDoubleQuotedTableName_3) {
+    std::string query = "SELECT * FROM \"table\"\"name\"";
+    auto result = parser::parse_sql(query);
+    ASSERT_TRUE(result.has_value());
+
+    auto* cmd = std::get_if<ast::SelectCommand>(&(*result));
+    ASSERT_NE(cmd, nullptr);
+
+    EXPECT_EQ(cmd->table_name, "\"table\"\"name\"");
+    EXPECT_TRUE(cmd->projection.empty());
+}
+
+TEST(AntlrParser, ParsesSelectWithDoubleQuotedTableName_4) {
+    std::string query = "SELECT * FROM \"\"\"users\"";
+    auto result = parser::parse_sql(query);
+    ASSERT_TRUE(result.has_value());
+
+    auto* cmd = std::get_if<ast::SelectCommand>(&(*result));
+    ASSERT_NE(cmd, nullptr);
+
+    EXPECT_EQ(cmd->table_name, "\"\"\"users\"");
+    EXPECT_TRUE(cmd->projection.empty());
+}
+
+TEST(AntlrParser, ParsesSelectWithDoubleQuotedTableName_5) {
+    std::string query = "SELECT * FROM \"table name\"";
+    auto result = parser::parse_sql(query);
+    ASSERT_TRUE(result.has_value());
+
+    auto* cmd = std::get_if<ast::SelectCommand>(&(*result));
+    ASSERT_NE(cmd, nullptr);
+
+    EXPECT_EQ(cmd->table_name, "\"table name\"");
+    EXPECT_TRUE(cmd->projection.empty());
+}
+
+TEST(AntlrParser, HandlesOptionalSemicolon) {
+    std::string query = "SELECT * FROM users";
+    auto result = parser::parse_sql(query);
+    ASSERT_TRUE(result.has_value());
+    ASSERT_NE(std::get_if<ast::SelectCommand>(&(*result)), nullptr);
+}
+
 TEST(AntlrParser, ParsesSelectColumns) {
     std::string query = "SELECT id, name FROM users";
     auto result = parser::parse_sql(query);
@@ -102,13 +169,6 @@ TEST(AntlrParser, HandlesWhitespaceAndCase) {
     ASSERT_EQ(cmd->column_definitions.size(), 2);
     EXPECT_EQ(cmd->column_definitions[0].column_name, "id");
     EXPECT_EQ(cmd->column_definitions[0].type, command::Datatype::INT);
-}
-
-TEST(AntlrParser, HandlesOptionalSemicolon) {
-    std::string query = "SELECT * FROM users;";
-    auto result = parser::parse_sql(query);
-    ASSERT_TRUE(result.has_value());
-    ASSERT_NE(std::get_if<ast::SelectCommand>(&(*result)), nullptr);
 }
 
 TEST(AntlrParser, ReturnsNulloptOnInvalidSyntax) {

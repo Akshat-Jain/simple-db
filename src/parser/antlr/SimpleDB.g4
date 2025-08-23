@@ -111,7 +111,7 @@ INTEGER_LITERAL
 // --- Identifier (Case-Sensitive) ---
 // This MUST be defined AFTER all the keywords.
 IDENTIFIER
-    : [a-zA-Z_] [a-zA-Z_0-9]*
+    : [a-zA-Z_] [a-zA-Z_0-9]* | '"' ( ~["] | '""')+ '"'
     ;
 
 // --- Punctuation and Symbols ---
