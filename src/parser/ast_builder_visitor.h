@@ -9,7 +9,7 @@
 
 class AstBuilderVisitor : public SimpleDBBaseVisitor {
    private:
-    std::string processIdentifier(const std::string& identifier);
+    std::string processIdentifier(const std::string &identifier);
 
    public:
     std::any visitQuery(SimpleDBParser::QueryContext *ctx) override;

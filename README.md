@@ -40,13 +40,13 @@ cmake --build build
 If you want to format the code using `clang-format`, you can run the following command:
 
 ```bash
-clang-format src/**/*.cpp include/**/*.h tests/**/*.cpp -i
+clang-format src/**/*.{cpp,h} include/**/*.h tests/**/*.cpp -i
 ```
 
 For validating the formatting, you can use:
 
 ```bash
-clang-format src/**/*.cpp include/**/*.h tests/**/*.cpp --dry-run -Werror
+clang-format src/**/*.{cpp,h} include/**/*.h tests/**/*.cpp --dry-run -Werror
 ```
 
 ## pkg-config (macOS)
