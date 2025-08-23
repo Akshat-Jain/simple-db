@@ -2,7 +2,12 @@
 
 This is a dump of my thoughts when working on a new feature, or exploring different alternatives for xyz stuff, etc.
 
-Next task is to add support for SELECT queries.
+Next tasks:
+1. WHERE clause support (strings/numbers only for now, no expressions)
+2. Data generation utilities (1K, 100K, 1M row datasets)
+3. Benchmarking framework (select queries, document results in a `benchmarks/` directory)
+4. Index implementation (B+ tree for single columns)
+5. Performance measurement (before/after index comparison)
 
 #### Future todo #1: Buffer Pool Manager
 
