@@ -7,6 +7,21 @@
 #include "simpledb/ast/ast.h"
 #include <vector>
 
+std::string AstBuilderVisitor::processIdentifier(const std::string& identifier) {
+    if (identifier.front() == '"' && identifier.back() == '"' && identifier.length() >= 2) {
+        // Remove outer quotes and convert escaped quotes
+        std::string result = identifier.substr(1, identifier.length() - 2);
+        // Convert "" to "
+        size_t pos = 0;
+        while ((pos = result.find("\"\"", pos)) != std::string::npos) {
+            result.replace(pos, 2, "\"");
+            pos += 1;
+        }
+        return result;
+    }
+    return identifier;
+}
+
 std::any AstBuilderVisitor::visitQuery(SimpleDBParser::QueryContext *ctx) {
     if (ctx->createStatement()) {
         return visit(ctx->createStatement());
@@ -28,7 +43,7 @@ std::any AstBuilderVisitor::visitQuery(SimpleDBParser::QueryContext *ctx) {
 
 std::any AstBuilderVisitor::visitSelectStatement(SimpleDBParser::SelectStatementContext *ctx) {
     ast::SelectCommand command;
-    command.table_name = ctx->tableName->getText();
+    command.table_name = processIdentifier(ctx->tableName->getText());
     command.projection = std::any_cast<std::vector<std::string>>(visit(ctx->projection()));
     return command;
 }
@@ -43,14 +58,14 @@ std::any AstBuilderVisitor::visitProjection(SimpleDBParser::ProjectionContext *c
 std::any AstBuilderVisitor::visitColumnList(SimpleDBParser::ColumnListContext *ctx) {
     std::vector<std::string> columns;
     for (const auto &item : ctx->IDENTIFIER()) {
-        columns.push_back(item->getText());
+        columns.push_back(processIdentifier(item->getText()));
     }
     return columns;
 }
 
 std::any AstBuilderVisitor::visitCreateStatement(SimpleDBParser::CreateStatementContext *ctx) {
     command::CreateTableCommand command;
-    command.table_name = ctx->tableName->getText();
+    command.table_name = processIdentifier(ctx->tableName->getText());
     command.column_definitions = std::any_cast<std::vector<command::ColumnDefinition>>(visit(ctx->columnDefinitions()));
     return command;
 }
@@ -65,7 +80,7 @@ std::any AstBuilderVisitor::visitColumnDefinitions(SimpleDBParser::ColumnDefinit
 
 std::any AstBuilderVisitor::visitColumnDef(SimpleDBParser::ColumnDefContext *ctx) {
     command::ColumnDefinition column_def;
-    column_def.column_name = ctx->columnName->getText();
+    column_def.column_name = processIdentifier(ctx->columnName->getText());
     column_def.type = std::any_cast<command::Datatype>(visit(ctx->dataType()));
     return column_def;
 }
@@ -81,13 +96,13 @@ std::any AstBuilderVisitor::visitDataType(SimpleDBParser::DataTypeContext *ctx) 
 
 std::any AstBuilderVisitor::visitDropStatement(SimpleDBParser::DropStatementContext *ctx) {
     command::DropTableCommand command;
-    command.table_name = ctx->tableName->getText();
+    command.table_name = processIdentifier(ctx->tableName->getText());
     return command;
 }
 
 std::any AstBuilderVisitor::visitInsertStatement(SimpleDBParser::InsertStatementContext *ctx) {
     command::InsertCommand command;
-    command.table_name = ctx->tableName->getText();
+    command.table_name = processIdentifier(ctx->tableName->getText());
     if (ctx->columnList()) {
         command.columns = std::any_cast<std::vector<std::string>>(visit(ctx->columnList()));
     }

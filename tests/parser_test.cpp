@@ -22,7 +22,7 @@ TEST(AntlrParser, ParsesSelectWithDoubleQuotedTableName_1) {
     auto* cmd = std::get_if<ast::SelectCommand>(&(*result));
     ASSERT_NE(cmd, nullptr);
 
-    EXPECT_EQ(cmd->table_name, "\"users\"");
+    EXPECT_EQ(cmd->table_name, "users");
     EXPECT_TRUE(cmd->projection.empty());
 }
 
@@ -34,7 +34,7 @@ TEST(AntlrParser, ParsesSelectWithDoubleQuotedTableName_2) {
     auto* cmd = std::get_if<ast::SelectCommand>(&(*result));
     ASSERT_NE(cmd, nullptr);
 
-    EXPECT_EQ(cmd->table_name, "\"123users\"");
+    EXPECT_EQ(cmd->table_name, "123users");
     EXPECT_TRUE(cmd->projection.empty());
 }
 
@@ -46,7 +46,7 @@ TEST(AntlrParser, ParsesSelectWithDoubleQuotedTableName_3) {
     auto* cmd = std::get_if<ast::SelectCommand>(&(*result));
     ASSERT_NE(cmd, nullptr);
 
-    EXPECT_EQ(cmd->table_name, "\"table\"\"name\"");
+    EXPECT_EQ(cmd->table_name, "table\"name");
     EXPECT_TRUE(cmd->projection.empty());
 }
 
@@ -58,7 +58,7 @@ TEST(AntlrParser, ParsesSelectWithDoubleQuotedTableName_4) {
     auto* cmd = std::get_if<ast::SelectCommand>(&(*result));
     ASSERT_NE(cmd, nullptr);
 
-    EXPECT_EQ(cmd->table_name, "\"\"\"users\"");
+    EXPECT_EQ(cmd->table_name, "\"users");
     EXPECT_TRUE(cmd->projection.empty());
 }
 
@@ -70,7 +70,7 @@ TEST(AntlrParser, ParsesSelectWithDoubleQuotedTableName_5) {
     auto* cmd = std::get_if<ast::SelectCommand>(&(*result));
     ASSERT_NE(cmd, nullptr);
 
-    EXPECT_EQ(cmd->table_name, "\"table name\"");
+    EXPECT_EQ(cmd->table_name, "table name");
     EXPECT_TRUE(cmd->projection.empty());
 }
 
@@ -91,6 +91,19 @@ TEST(AntlrParser, ParsesSelectColumns) {
 
     EXPECT_EQ(cmd->table_name, "users");
     std::vector<std::string> expected_cols = {"id", "name"};
+    EXPECT_EQ(cmd->projection, expected_cols);
+}
+
+TEST(AntlrParser, ParsesSelectWithDoubleQuotedColumnNames) {
+    std::string query = R"(SELECT "123 id", """column"" name" FROM users)";
+    auto result = parser::parse_sql(query);
+    ASSERT_TRUE(result.has_value());
+
+    auto* cmd = std::get_if<ast::SelectCommand>(&(*result));
+    ASSERT_NE(cmd, nullptr);
+
+    EXPECT_EQ(cmd->table_name, "users");
+    std::vector<std::string> expected_cols = {"123 id", "\"column\" name"};
     EXPECT_EQ(cmd->projection, expected_cols);
 }
 
