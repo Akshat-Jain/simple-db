@@ -7,7 +7,7 @@
 #include "simpledb/ast/ast.h"
 #include <vector>
 
-std::string AstBuilderVisitor::processIdentifier(const std::string& identifier) {
+std::string AstBuilderVisitor::processIdentifier(const std::string &identifier) {
     if (identifier.front() == '"' && identifier.back() == '"' && identifier.length() >= 2) {
         // Remove outer quotes and convert escaped quotes
         std::string result = identifier.substr(1, identifier.length() - 2);
