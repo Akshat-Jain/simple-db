@@ -16,6 +16,15 @@ namespace planner {
             std::make_unique<simpledb::execution::TableScanOperator>(cmd.table_name, data_dir);
 
         // 2. If there's a WHERE clause, wrap the TableScan with a FilterOperator.
+        // TODO: Implement predicate push-down optimization
+        // Currently WHERE clauses are always applied as separate FilterOperator after TableScan.
+        // We could push simple predicates down to storage layer: TableScan could accept WHERE conditions and filter
+        // during page scanning We would continue to use FilterOperator for complex predicates that cannot be pushed
+        // down. For example:
+        // - Joins: Cannot push down predicates involving multiple tables
+        // - Complex expressions: Functions or calculations that storage layer cannot evaluate
+        // - Subqueries: Cannot push down predicates involving subqueries
+        // - Aggregations: Cannot push down predicates on aggregated results
         if (cmd.where_clause.has_value()) {
             op = std::make_unique<simpledb::execution::FilterOperator>(
                 cmd.table_name, std::move(op), cmd.where_clause.value());

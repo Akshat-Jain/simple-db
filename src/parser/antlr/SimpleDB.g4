@@ -28,6 +28,15 @@ columnList
     : IDENTIFIER (COMMA IDENTIFIER)*
     ;
 
+// TODO: Extend WHERE clause support for more complex expressions
+// Current limitations: Only supports simple "column op value" predicates
+// Future enhancements:
+// - Multiple conditions with AND/OR: WHERE id = 5 AND name = 'Alice'
+// - IN clause: WHERE id IN (1, 2, 3, 5, 8)
+// - NULL checks: WHERE email IS NOT NULL
+// - Support for expressions on both sides: WHERE col1 = col2 AND col3 > col4 + 5
+// - Subqueries: WHERE id IN (SELECT user_id FROM orders)
+// - Functions: WHERE UPPER(name) = 'ALICE' or WHERE LENGTH(name) > 5
 whereClause: WHERE IDENTIFIER comparisonOp value;
 
 comparisonOp: '=' | '<' | '>' | '<=' | '>=' | '!=' ;

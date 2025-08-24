@@ -10,6 +10,11 @@
 #include <vector>
 
 namespace simpledb::execution {
+    // TODO: Implement proper type-aware comparison logic
+    // Currently all comparisons are done as strings, which works for basic cases but has limitations:
+    // Numeric comparisons use lexicographic ordering ("10" < "2" returns true)
+    // To fix this, we should ideally preserve the type information during parsing, instead of blindly converting
+    // everything to string.
     bool evaluate(ast::ComparisonOp op, const std::string& lhs, const std::string& rhs) {
         switch (op) {
             case ast::ComparisonOp::EQUALS:
