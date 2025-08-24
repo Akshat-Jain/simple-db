@@ -3,6 +3,7 @@
 #include <string>
 
 static void Benchmark_StringOperations(benchmark::State& state) {
+    //    state.SetLabel("length=" + std::to_string(state.range(0)) + ",op=" + std::to_string(state.range(1)));
     const int length = state.range(0);
     const int op_type = state.range(1);  // 0=concat, 1=find, 2=replace
 
@@ -34,4 +35,5 @@ BENCHMARK(Benchmark_StringOperations)
     ->ArgsProduct({
         {10, 100, 1000},  // string lengths
         {0, 1, 2}         // operation types
-    });
+    })
+    ->ArgNames({"length", "operation"});
