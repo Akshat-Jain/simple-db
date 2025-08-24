@@ -46,7 +46,10 @@ namespace simpledb::execution {
         const catalog::TableSchema& table_schema = table_schema_optional.value();
         for (size_t i = 0; i < table_schema.column_definitions.size(); ++i) {
             if (table_schema.column_definitions[i].column_name == where_clause_.column_name) {
-                where_column_index_ = i;
+                // todo: We might need a way to propagate the row signature through the operator pipeline.
+                // The current implementation is inherently assuming that the FilterOperator is getting the row
+                // with all columns in the same order as defined in the table schema.
+                where_column_index_ = (int)i;
                 if (table_schema.column_definitions[i].type == command::Datatype::INT) {
                     // For INT columns, ensure the WHERE clause value is a valid integer.
                     try {
