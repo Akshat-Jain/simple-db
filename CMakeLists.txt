@@ -32,6 +32,16 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(googletest)
 
 #-----------------------------------------------------------------------------
+# Google Benchmark Dependency
+#-----------------------------------------------------------------------------
+FetchContent_Declare(
+        googlebenchmark
+        GIT_REPOSITORY https://github.com/google/benchmark.git
+        GIT_TAG        v1.9.4
+)
+FetchContent_MakeAvailable(googlebenchmark)
+
+#-----------------------------------------------------------------------------
 # spdlog Dependency
 #-----------------------------------------------------------------------------
 FetchContent_Declare(
@@ -213,3 +223,19 @@ target_link_libraries(
 include(GoogleTest)
 gtest_discover_tests(run_tests)
 # This finds all TEST(...) cases in run_tests and registers them with CTest
+
+#-----------------------------------------------------------------------------
+# Benchmark Executable
+#-----------------------------------------------------------------------------
+add_executable(run_benchmarks
+        benchmarks/example_benchmark.cpp
+)
+
+target_include_directories(run_benchmarks PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
+target_link_libraries(run_benchmarks PRIVATE
+        benchmark::benchmark
+        benchmark::benchmark_main
+)
