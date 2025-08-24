@@ -45,6 +45,9 @@ std::any AstBuilderVisitor::visitSelectStatement(SimpleDBParser::SelectStatement
     ast::SelectCommand command;
     command.table_name = processIdentifier(ctx->tableName->getText());
     command.projection = std::any_cast<std::vector<std::string>>(visit(ctx->projection()));
+    if (ctx->whereClause()) {
+        command.where_clause = std::any_cast<ast::WhereClause>(visit(ctx->whereClause()));
+    }
     return command;
 }
 
@@ -53,6 +56,31 @@ std::any AstBuilderVisitor::visitProjection(SimpleDBParser::ProjectionContext *c
         return std::vector<std::string>();
     }
     return visit(ctx->columnList());
+}
+
+std::any AstBuilderVisitor::visitWhereClause(SimpleDBParser::WhereClauseContext *ctx) {
+    ast::WhereClause where_clause;
+    where_clause.column_name = processIdentifier(ctx->IDENTIFIER()->getText());
+    where_clause.op = std::any_cast<ast::ComparisonOp>(visit(ctx->comparisonOp()));
+    where_clause.value = std::any_cast<std::string>(visit(ctx->value()));
+    return where_clause;
+}
+
+std::any AstBuilderVisitor::visitComparisonOp(SimpleDBParser::ComparisonOpContext *ctx) {
+    if (ctx->getText() == "=") {
+        return ast::ComparisonOp::EQUALS;
+    } else if (ctx->getText() == "!=") {
+        return ast::ComparisonOp::NOT_EQUALS;
+    } else if (ctx->getText() == "<") {
+        return ast::ComparisonOp::LESS_THAN;
+    } else if (ctx->getText() == "<=") {
+        return ast::ComparisonOp::LESS_THAN_OR_EQUAL;
+    } else if (ctx->getText() == ">") {
+        return ast::ComparisonOp::GREATER_THAN;
+    } else if (ctx->getText() == ">=") {
+        return ast::ComparisonOp::GREATER_THAN_OR_EQUAL;
+    }
+    throw std::runtime_error("Unsupported comparison operator in AST builder visitor.");
 }
 
 std::any AstBuilderVisitor::visitColumnList(SimpleDBParser::ColumnListContext *ctx) {

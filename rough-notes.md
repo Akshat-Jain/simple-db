@@ -3,7 +3,7 @@
 This is a dump of my thoughts when working on a new feature, or exploring different alternatives for xyz stuff, etc.
 
 Next tasks:
-1. WHERE clause support (strings/numbers only for now, no expressions)
+1. WHERE clause support (strings/numbers only for now, no expressions) ✅ COMPLETED
 2. Data generation utilities (1K, 100K, 1M row datasets)
 3. Benchmarking framework (select queries, document results in a `benchmarks/` directory)
 4. Index implementation (B+ tree for single columns)

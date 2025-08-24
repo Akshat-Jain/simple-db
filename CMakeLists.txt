@@ -137,6 +137,7 @@ add_executable(simple-db
         src/serializer.cpp
         src/execution/table_scan_operator.cpp
         src/execution/projection_operator.cpp
+        src/execution/filter_operator.cpp
         src/planner.cpp
         src/parser/ast_builder_visitor.cpp
         ${ANTLR_GENERATED_SOURCES}
@@ -168,6 +169,7 @@ add_executable(run_tests
         tests/storage/table_heap_iterator_test.cpp
         tests/execution/table_scan_operator_test.cpp
         tests/execution/projection_operator_test.cpp
+        tests/execution/filter_operator_test.cpp
         tests/select_integration_test.cpp
         # Add other tests/*.cpp files here
 
@@ -184,6 +186,7 @@ add_executable(run_tests
         src/serializer.cpp
         src/execution/table_scan_operator.cpp
         src/execution/projection_operator.cpp
+        src/execution/filter_operator.cpp
         src/planner.cpp
         src/parser/ast_builder_visitor.cpp
         ${ANTLR_GENERATED_SOURCES}

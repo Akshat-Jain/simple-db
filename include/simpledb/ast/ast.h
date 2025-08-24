@@ -5,10 +5,20 @@
 #ifndef SIMPLE_DB_AST_H
 #define SIMPLE_DB_AST_H
 
+#include <optional>
 #include <string>
 #include <vector>
 
 namespace ast {
+    enum ComparisonOp { EQUALS, NOT_EQUALS, LESS_THAN, LESS_THAN_OR_EQUAL, GREATER_THAN, GREATER_THAN_OR_EQUAL };
+
+    struct WhereClause {
+        // WHERE column_name op value
+        std::string column_name;
+        ComparisonOp op;
+        std::string value;
+    };
+
     /**
      * @brief Represents the root node of the Abstract Syntax Tree (AST) for a SELECT query.
      *
@@ -30,6 +40,9 @@ namespace ast {
         // The projection list, representing the columns after the SELECT keyword.
         // An empty vector signifies `SELECT *`.
         std::vector<std::string> projection;
+
+        // Optional WHERE clause for filtering results.
+        std::optional<WhereClause> where_clause;
     };
 }  // namespace ast
 

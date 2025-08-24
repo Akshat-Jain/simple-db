@@ -12,6 +12,7 @@ TEST(AntlrParser, ParsesSelectAll) {
 
     EXPECT_EQ(cmd->table_name, "users");
     EXPECT_TRUE(cmd->projection.empty());
+    EXPECT_FALSE(cmd->where_clause.has_value());
 }
 
 TEST(AntlrParser, ParsesSelectWithDoubleQuotedTableName_1) {
@@ -182,6 +183,83 @@ TEST(AntlrParser, HandlesWhitespaceAndCase) {
     ASSERT_EQ(cmd->column_definitions.size(), 2);
     EXPECT_EQ(cmd->column_definitions[0].column_name, "id");
     EXPECT_EQ(cmd->column_definitions[0].type, command::Datatype::INT);
+}
+
+TEST(AntlrParser, ParsesSelectWithWhereEquals) {
+    std::string query = "SELECT * FROM users WHERE id = 5";
+    auto result = parser::parse_sql(query);
+    ASSERT_TRUE(result.has_value());
+
+    auto* cmd = std::get_if<ast::SelectCommand>(&(*result));
+    ASSERT_NE(cmd, nullptr);
+
+    EXPECT_EQ(cmd->table_name, "users");
+    EXPECT_TRUE(cmd->projection.empty());
+    ASSERT_TRUE(cmd->where_clause.has_value());
+
+    const auto& where = cmd->where_clause.value();
+    EXPECT_EQ(where.column_name, "id");
+    EXPECT_EQ(where.op, ast::ComparisonOp::EQUALS);
+    EXPECT_EQ(where.value, "5");
+}
+
+TEST(AntlrParser, ParsesSelectWithWhereString) {
+    std::string query = "SELECT name FROM users WHERE username = 'alice'";
+    auto result = parser::parse_sql(query);
+    ASSERT_TRUE(result.has_value());
+
+    auto* cmd = std::get_if<ast::SelectCommand>(&(*result));
+    ASSERT_NE(cmd, nullptr);
+
+    EXPECT_EQ(cmd->table_name, "users");
+    ASSERT_EQ(cmd->projection.size(), 1);
+    EXPECT_EQ(cmd->projection[0], "name");
+
+    ASSERT_TRUE(cmd->where_clause.has_value());
+    const auto& where = cmd->where_clause.value();
+    EXPECT_EQ(where.column_name, "username");
+    EXPECT_EQ(where.op, ast::ComparisonOp::EQUALS);
+    EXPECT_EQ(where.value, "alice");
+}
+
+TEST(AntlrParser, ParsesSelectWithAllComparisonOperators) {
+    struct TestCase {
+        std::string query;
+        ast::ComparisonOp expected_op;
+    };
+
+    std::vector<TestCase> test_cases = {
+        {"SELECT * FROM users WHERE id = 5", ast::ComparisonOp::EQUALS},
+        {"SELECT * FROM users WHERE id != 5", ast::ComparisonOp::NOT_EQUALS},
+        {"SELECT * FROM users WHERE id < 5", ast::ComparisonOp::LESS_THAN},
+        {"SELECT * FROM users WHERE id <= 5", ast::ComparisonOp::LESS_THAN_OR_EQUAL},
+        {"SELECT * FROM users WHERE id > 5", ast::ComparisonOp::GREATER_THAN},
+        {"SELECT * FROM users WHERE id >= 5", ast::ComparisonOp::GREATER_THAN_OR_EQUAL}};
+
+    for (const auto& test_case : test_cases) {
+        auto result = parser::parse_sql(test_case.query);
+        ASSERT_TRUE(result.has_value()) << "Failed to parse: " << test_case.query;
+
+        auto* cmd = std::get_if<ast::SelectCommand>(&(*result));
+        ASSERT_NE(cmd, nullptr);
+        ASSERT_TRUE(cmd->where_clause.has_value());
+
+        EXPECT_EQ(cmd->where_clause.value().op, test_case.expected_op)
+            << "Wrong operator for query: " << test_case.query;
+    }
+}
+
+TEST(AntlrParser, ParsesSelectWithDoubleQuotedColumnInWhere) {
+    std::string query = "SELECT * FROM users WHERE \"user id\" = 5";
+    auto result = parser::parse_sql(query);
+    ASSERT_TRUE(result.has_value());
+
+    auto* cmd = std::get_if<ast::SelectCommand>(&(*result));
+    ASSERT_NE(cmd, nullptr);
+
+    ASSERT_TRUE(cmd->where_clause.has_value());
+    const auto& where = cmd->where_clause.value();
+    EXPECT_EQ(where.column_name, "user id");
 }
 
 TEST(AntlrParser, ReturnsNulloptOnInvalidSyntax) {
