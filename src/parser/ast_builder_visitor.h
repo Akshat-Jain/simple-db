@@ -18,6 +18,10 @@ class AstBuilderVisitor : public SimpleDBBaseVisitor {
 
     std::any visitProjection(SimpleDBParser::ProjectionContext *ctx) override;
 
+    std::any visitWhereClause(SimpleDBParser::WhereClauseContext *ctx) override;
+
+    std::any visitComparisonOp(SimpleDBParser::ComparisonOpContext *ctx) override;
+
     std::any visitColumnList(SimpleDBParser::ColumnListContext *ctx) override;
 
     std::any visitCreateStatement(SimpleDBParser::CreateStatementContext *ctx) override;

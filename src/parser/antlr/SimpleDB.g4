@@ -16,7 +16,7 @@ query
 
 // --- SELECT Statement ---
 selectStatement
-    : SELECT projection FROM tableName=IDENTIFIER
+    : SELECT projection FROM tableName=IDENTIFIER whereClause?
     ;
 
 projection
@@ -27,6 +27,10 @@ projection
 columnList
     : IDENTIFIER (COMMA IDENTIFIER)*
     ;
+
+whereClause: WHERE IDENTIFIER comparisonOp value;
+
+comparisonOp: '=' | '<' | '>' | '<=' | '>=' | '!=' ;
 
 // --- CREATE TABLE Statement ---
 createStatement
@@ -88,6 +92,7 @@ showStatement
 // --- Keywords (Case-Insensitive) ---
 SELECT : S E L E C T;
 FROM   : F R O M;
+WHERE  : W H E R E;
 CREATE : C R E A T E;
 TABLE  : T A B L E;
 DROP   : D R O P;
