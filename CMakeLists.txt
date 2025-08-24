@@ -169,6 +169,7 @@ add_executable(run_tests
         tests/storage/table_heap_iterator_test.cpp
         tests/execution/table_scan_operator_test.cpp
         tests/execution/projection_operator_test.cpp
+        tests/execution/filter_operator_test.cpp
         tests/select_integration_test.cpp
         # Add other tests/*.cpp files here
 
