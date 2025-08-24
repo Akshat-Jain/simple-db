@@ -106,3 +106,107 @@ TEST_F(SelectIntegrationTest, SelectSomeColumns) {
     }
     ASSERT_EQ(i, expected_rows.size());
 }
+
+TEST_F(SelectIntegrationTest, SelectWithWhereEquals) {
+    std::string query = "SELECT * FROM test_table WHERE id = 1";
+    auto parse_result = parser::parse_sql(query);
+    ASSERT_TRUE(parse_result.has_value());
+
+    auto* select_command = std::get_if<ast::SelectCommand>(&(*parse_result));
+    ASSERT_TRUE(select_command != nullptr);
+
+    // Create the execution plan.
+    auto operator_plan = planner::plan_select(*select_command, test_data_dir);
+    ASSERT_TRUE(operator_plan);
+
+    row::Row expected_row = {"1", "Alice", "alice@example.com"};
+
+    int i = 0;
+    while (true) {
+        auto row = operator_plan->next();
+        if (!row) {
+            break;  // No more rows
+        }
+
+        ASSERT_EQ(*row, expected_row);
+        i++;
+    }
+    ASSERT_EQ(i, 1);  // Should return exactly 1 row
+}
+
+TEST_F(SelectIntegrationTest, SelectWithWhereStringMatch) {
+    std::string query = "SELECT id, name FROM test_table WHERE name = 'Bob'";
+    auto parse_result = parser::parse_sql(query);
+    ASSERT_TRUE(parse_result.has_value());
+
+    auto* select_command = std::get_if<ast::SelectCommand>(&(*parse_result));
+    ASSERT_TRUE(select_command != nullptr);
+
+    // Create the execution plan.
+    auto operator_plan = planner::plan_select(*select_command, test_data_dir);
+    ASSERT_TRUE(operator_plan);
+
+    row::Row expected_row = {"2", "Bob"};
+
+    int i = 0;
+    while (true) {
+        auto row = operator_plan->next();
+        if (!row) {
+            break;  // No more rows
+        }
+
+        ASSERT_EQ(*row, expected_row);
+        i++;
+    }
+    ASSERT_EQ(i, 1);  // Should return exactly 1 row
+}
+
+TEST_F(SelectIntegrationTest, SelectWithWhereNoMatch) {
+    std::string query = "SELECT * FROM test_table WHERE name = 'Charlie'";
+    auto parse_result = parser::parse_sql(query);
+    ASSERT_TRUE(parse_result.has_value());
+
+    auto* select_command = std::get_if<ast::SelectCommand>(&(*parse_result));
+    ASSERT_TRUE(select_command != nullptr);
+
+    // Create the execution plan.
+    auto operator_plan = planner::plan_select(*select_command, test_data_dir);
+    ASSERT_TRUE(operator_plan);
+
+    int i = 0;
+    while (true) {
+        auto row = operator_plan->next();
+        if (!row) {
+            break;  // No more rows
+        }
+        i++;
+    }
+    ASSERT_EQ(i, 0);  // Should return no rows
+}
+
+TEST_F(SelectIntegrationTest, SelectWithWhereComparisonOperators) {
+    std::string query = "SELECT name FROM test_table WHERE id != '1'";
+    auto parse_result = parser::parse_sql(query);
+    ASSERT_TRUE(parse_result.has_value());
+
+    auto* select_command = std::get_if<ast::SelectCommand>(&(*parse_result));
+    ASSERT_TRUE(select_command != nullptr);
+
+    // Create the execution plan.
+    auto operator_plan = planner::plan_select(*select_command, test_data_dir);
+    ASSERT_TRUE(operator_plan);
+
+    row::Row expected_row = {"Bob"};
+
+    int i = 0;
+    while (true) {
+        auto row = operator_plan->next();
+        if (!row) {
+            break;  // No more rows
+        }
+
+        ASSERT_EQ(*row, expected_row);
+        i++;
+    }
+    ASSERT_EQ(i, 1);  // Should return exactly 1 row (Bob, not Alice)
+}
