@@ -24,7 +24,7 @@ namespace planner {
         // 3. Create the ProjectionOperator, giving it the current operator as its child.
         op = std::make_unique<simpledb::execution::ProjectionOperator>(cmd.table_name, std::move(op), cmd.projection);
 
-        // 3. Return the top-most operator in the pipeline.
+        // 4. Return the top-most operator in the pipeline.
         return op;
     }
 }  // namespace planner
