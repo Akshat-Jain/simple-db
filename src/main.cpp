@@ -47,7 +47,7 @@ results::ExecutionResult parse_and_execute(const std::string& query) {
         if (auto* cmd = std::get_if<ast::SelectCommand>(&(*parse_result))) {
             auto plan = planner::plan_select(*cmd, config::get_config().data_dir);
 
-            // Print headers
+            // Collect headers
             std::vector<std::string> headers;
             if (cmd->projection.empty()) {  // SELECT *
                 auto schema = catalog::get_table_schema(cmd->table_name).value();
@@ -57,19 +57,15 @@ results::ExecutionResult parse_and_execute(const std::string& query) {
             } else {
                 headers = cmd->projection;
             }
-            for (const auto& header : headers) {
-                std::cout << header << "\t";
-            }
-            std::cout << std::endl;
 
-            // Execute plan and print rows
+            // Collect rows
+            std::vector<row::Row> rows;
             while (auto row = plan->next()) {
-                for (const auto& val : *row) {
-                    std::cout << val << "\t";
-                }
-                std::cout << std::endl;
+                rows.push_back(*row);
             }
-            return results::ExecutionResult::Success();
+
+            results::ResultSet result_set{headers, rows};
+            return results::ExecutionResult::SuccessWithData(result_set);
         }
 
         // If it's none of the above, something is wrong.
