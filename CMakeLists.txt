@@ -150,6 +150,7 @@ add_executable(simple-db
         src/execution/filter_operator.cpp
         src/planner.cpp
         src/parser/ast_builder_visitor.cpp
+        src/query_runner.cpp
         ${ANTLR_GENERATED_SOURCES}
 )
 add_dependencies(simple-db AntlrGeneratedSources)
