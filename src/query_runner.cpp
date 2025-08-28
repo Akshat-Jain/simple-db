@@ -66,4 +66,3 @@ namespace query_runner {
         }
     }
 }  // namespace query_runner
-

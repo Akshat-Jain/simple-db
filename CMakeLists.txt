@@ -229,7 +229,23 @@ gtest_discover_tests(run_tests)
 # Benchmark Executable
 #-----------------------------------------------------------------------------
 add_executable(run_benchmarks
-        benchmarks/example_benchmark.cpp
+        benchmarks/benchmark.cpp
+        src/config.cpp
+        src/parser.cpp
+        src/history.cpp
+        src/catalog.cpp
+        src/executor.cpp
+        src/result.cpp
+        src/storage/page.cpp
+        src/storage/table_heap.cpp
+        src/serializer.cpp
+        src/execution/table_scan_operator.cpp
+        src/execution/projection_operator.cpp
+        src/execution/filter_operator.cpp
+        src/planner.cpp
+        src/parser/ast_builder_visitor.cpp
+        src/query_runner.cpp
+        ${ANTLR_GENERATED_SOURCES}
 )
 
 target_include_directories(run_benchmarks PRIVATE
@@ -239,4 +255,8 @@ target_include_directories(run_benchmarks PRIVATE
 target_link_libraries(run_benchmarks PRIVATE
         benchmark::benchmark
         benchmark::benchmark_main
+        ${READLINE_LIBRARIES}
+        spdlog::spdlog
+        nlohmann_json::nlohmann_json
+        antlr4_static
 )
