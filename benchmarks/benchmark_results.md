@@ -37,3 +37,5 @@ We should re-run this benchmark after future optimisations like the following:
 1. Update volcano iterator model to vectorized model (batch processing)
 2. Support for index scan
 3. Support for UNIQUE constraints or primary keys (as we are currently doing a full table scan even after finding the row). Although, this should be added as a separate benchmark.
+4. Predicate pushdown
+
