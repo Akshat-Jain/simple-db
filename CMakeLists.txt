@@ -32,6 +32,16 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(googletest)
 
 #-----------------------------------------------------------------------------
+# Google Benchmark Dependency
+#-----------------------------------------------------------------------------
+FetchContent_Declare(
+        googlebenchmark
+        GIT_REPOSITORY https://github.com/google/benchmark.git
+        GIT_TAG        v1.9.4
+)
+FetchContent_MakeAvailable(googlebenchmark)
+
+#-----------------------------------------------------------------------------
 # spdlog Dependency
 #-----------------------------------------------------------------------------
 FetchContent_Declare(
@@ -140,6 +150,7 @@ add_executable(simple-db
         src/execution/filter_operator.cpp
         src/planner.cpp
         src/parser/ast_builder_visitor.cpp
+        src/query_runner.cpp
         ${ANTLR_GENERATED_SOURCES}
 )
 add_dependencies(simple-db AntlrGeneratedSources)
@@ -213,3 +224,39 @@ target_link_libraries(
 include(GoogleTest)
 gtest_discover_tests(run_tests)
 # This finds all TEST(...) cases in run_tests and registers them with CTest
+
+#-----------------------------------------------------------------------------
+# Benchmark Executable
+#-----------------------------------------------------------------------------
+add_executable(run_benchmarks
+        benchmarks/benchmark.cpp
+        src/config.cpp
+        src/parser.cpp
+        src/history.cpp
+        src/catalog.cpp
+        src/executor.cpp
+        src/result.cpp
+        src/storage/page.cpp
+        src/storage/table_heap.cpp
+        src/serializer.cpp
+        src/execution/table_scan_operator.cpp
+        src/execution/projection_operator.cpp
+        src/execution/filter_operator.cpp
+        src/planner.cpp
+        src/parser/ast_builder_visitor.cpp
+        src/query_runner.cpp
+        ${ANTLR_GENERATED_SOURCES}
+)
+
+target_include_directories(run_benchmarks PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
+target_link_libraries(run_benchmarks PRIVATE
+        benchmark::benchmark
+        benchmark::benchmark_main
+        ${READLINE_LIBRARIES}
+        spdlog::spdlog
+        nlohmann_json::nlohmann_json
+        antlr4_static
+)
