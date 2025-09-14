@@ -37,27 +37,62 @@ What our simplified "No Pager Cache" approach does:
   8. write() the entire modified 4KB page back to disk. 
   9. Close the file.
 
-#### Future todo #2: Indexes
+#### B+ Tree Implementation Plan
 
-An index is a separate data structure that allows for fast lookups. 
-Without an index, the only way to find a specific row is to scan the entire table from beginning to end.
+Based on PostgreSQL's approach, here's our minimal, fast B+ tree design:
 
-What a real Index (like a B-Tree) does:
-- It's a separate structure (often in its own file) that maps column values to the physical location of the rows.
-- To find the user with id = 123, the database doesn't read the whole table. It searches the B-Tree index for the key 123.
-- The B-Tree search is very fast (logarithmic complexity), quickly leading to a leaf node that says "the row for id 123 is on Page #57 at offset 820".
-- The database then uses the Pager to fetch only Page #57 and reads the record from that specific offset.
+**Core Page Structure:**
+```cpp
+struct BTreePageHeader {
+    uint16_t page_type;        // 0=leaf, 1=internal
+    uint16_t num_entries;      // Number of key-value pairs
+    uint32_t prev_index_page;  // Left sibling index page (0 if none)
+    uint32_t next_index_page;  // Right sibling index page (0 if none)  
+};
+// Total: 12 bytes
 
-What our simplified "No Indexes" approach does:
-- Our TableHeap is just a collection of pages with no specific order.
-- When we eventually implement SELECT * FROM users WHERE id = 123, the logic will be:
-  1. Go to Page #1 of users.data. Read it into memory. 
-  2. Scan every record on that page. Deserialize it and check if its id is 123. 
-  3. Go to Page #2. Read it. Scan every record. 
-  4. ...continue this for every single page in the table file until the record is found or the end of the file is reached.
+struct InternalEntry {
+    int32_t separator_key;      // Boundary value
+    uint32_t child_index_page;  // Child index page ID
+};
+// 8 bytes per entry
 
-This is called a Full Table Scan. 
-It's very slow for large tables but is simple to implement because you don't need to build or maintain any complex index data structures. You are deferring the entire concept of data structures for fast lookups.
+struct LeafEntry {
+    int32_t key;                    // The indexed value
+    uint32_t table_page_id;         // Which page in the TABLE file
+    uint16_t table_row_offset;      // Offset within that TABLE page
+};
+// 10 bytes per entry
+```
+
+**Page Capacity (4KB pages):**
+- Internal pages: 510 entries (can reference 511 child pages)
+- Leaf pages: 408 key-value pairs
+- Header overhead: only 12 bytes
+
+**Architecture Integration:**
+- `IndexScanOperator`: New Volcano-model operator for indexed access
+- Planner chooses between `TableScanOperator` vs `IndexScanOperator` based on available indexes
+- Index files: `table_name_column.idx` alongside `table_name.data`
+- Clear separation: index pages reference other index pages OR table pages (with table_ prefix)
+
+**Search Example (WHERE user_id = 502):**
+1. Read index_page_0 (root): 502 >= 500 → go to child_index_page=6
+2. Read index_page_6 (leaf): Find key=502 → {table_page=1, table_offset=64}
+3. Read table_page_1 at offset 64: Get actual user row
+**Result: 3 page reads instead of full table scan**
+
+**Expected Performance Impact:**
+- 100K row SELECT: 277ms → 1-5ms (logarithmic vs linear)
+- INSERT overhead: slight increase for index maintenance
+- Perfect foundation for benchmarking indexing benefits
+
+**Implementation Phases:**
+1. Create BTreePage structure and file management
+2. Implement basic B+ tree operations (insert, search, split)
+3. Build IndexScanOperator following Volcano model
+4. Extend planner with index awareness and cost-based decisions
+5. Add comprehensive benchmarks demonstrating O(n) → O(log n) improvements
 
 ## Other handy things:
 1. `files-to-prompt . | pbcopy`
