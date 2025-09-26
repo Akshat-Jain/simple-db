@@ -39,54 +39,6 @@ What our simplified "No Pager Cache" approach does:
 
 #### B+ Tree Implementation Plan
 
-Based on PostgreSQL's approach, here's our minimal, fast B+ tree design:
-
-**Core Page Structure:**
-```cpp
-struct BTreePageHeader {
-    uint16_t page_type;        // 0=leaf, 1=internal
-    uint16_t num_entries;      // Number of key-value pairs
-    uint32_t prev_index_page;  // Left sibling index page (0 if none)
-    uint32_t next_index_page;  // Right sibling index page (0 if none)  
-};
-// Total: 12 bytes
-
-struct InternalEntry {
-    int32_t separator_key;      // Boundary value
-    uint32_t child_index_page;  // Child index page ID
-};
-// 8 bytes per entry
-
-struct LeafEntry {
-    int32_t key;                    // The indexed value
-    uint32_t table_page_id;         // Which page in the TABLE file
-    uint16_t table_row_offset;      // Offset within that TABLE page
-};
-// 10 bytes per entry
-```
-
-**Page Capacity (4KB pages):**
-- Internal pages: 510 entries (can reference 511 child pages)
-- Leaf pages: 408 key-value pairs
-- Header overhead: only 12 bytes
-
-**Architecture Integration:**
-- `IndexScanOperator`: New Volcano-model operator for indexed access
-- Planner chooses between `TableScanOperator` vs `IndexScanOperator` based on available indexes
-- Index files: `table_name_column.idx` alongside `table_name.data`
-- Clear separation: index pages reference other index pages OR table pages (with table_ prefix)
-
-**Search Example (WHERE user_id = 502):**
-1. Read index_page_0 (root): 502 >= 500 → go to child_index_page=6
-2. Read index_page_6 (leaf): Find key=502 → {table_page=1, table_offset=64}
-3. Read table_page_1 at offset 64: Get actual user row
-**Result: 3 page reads instead of full table scan**
-
-**Expected Performance Impact:**
-- 100K row SELECT: 277ms → 1-5ms (logarithmic vs linear)
-- INSERT overhead: slight increase for index maintenance
-- Perfect foundation for benchmarking indexing benefits
-
 **Implementation Phases:**
 1. Create BTreePage structure and file management
 2. Implement basic B+ tree operations (insert, search, split)
