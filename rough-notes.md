@@ -64,5 +64,41 @@ What our simplified "No Pager Cache" approach does:
 - Benchmark-driven - demonstrate dramatic performance improvements early
 - Integration-first - get basic indexed SELECT working end-to-end before optimizing
 
+**File Structure and Organization:**
+
+**New Files Required (12 total):**
+
+**Core B+ Tree Infrastructure (5 files):**
+- `include/simpledb/storage/index_page.h` - Page structure definitions and diagrams (✅ created)
+- `src/storage/index_page.cpp` - IndexPage class methods implementation
+- `include/simpledb/storage/btree_index.h` - Main B+ tree index interface
+- `src/storage/btree_index.cpp` - Search, insert, page splits, file I/O operations
+- `include/simpledb/execution/index_scan_operator.h` - Volcano-model indexed table access operator
+- `src/execution/index_scan_operator.cpp` - Indexed row iteration and filtering implementation
+
+**Integration & Management (4 files):**
+- Instead of the index_catalog.h/cpp files, we can extend the existing catalog.h/cpp to track index information
+  - `include/simpledb/catalog/index_catalog.h` - Track which tables have indexes, metadata management
+  - `src/catalog/index_catalog.cpp` - Index registration, lookup, and persistence
+- `include/simpledb/storage/index_manager.h` - High-level index operations (create, drop, maintain)
+- `src/storage/index_manager.cpp` - Index lifecycle management implementation
+
+**Testing (4 files):**
+- `tests/storage/index_page_test.cpp` - Unit tests for IndexPage functionality
+- `tests/storage/btree_index_test.cpp` - Unit tests for B+ tree operations
+- `tests/execution/index_scan_operator_test.cpp` - Unit tests for indexed query execution
+- `tests/btree_integration_test.cpp` - End-to-end integration tests
+
+**Benchmarking (1 file):**
+- `benchmarks/index_performance.cpp` - Performance comparison benchmarks
+
+**Files to Modify:**
+- `planner.cpp` - Add IndexScanOperator selection logic
+- `catalog.cpp` - Extend for index information tracking
+- `executor.cpp` - Handle CREATE/DROP INDEX commands
+- Grammar files - If adding CREATE INDEX SQL syntax
+
+**Implementation Priority:** Start with core infrastructure (IndexPage + BPlusTreeIndex) for basic search, then add operator integration and planner logic for end-to-end indexed queries.
+
 ## Minor Todos:
 1. Update application.log filepath to also use ENV_DATA_DIR.
