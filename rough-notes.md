@@ -40,11 +40,29 @@ What our simplified "No Pager Cache" approach does:
 #### B+ Tree Implementation Plan
 
 **Implementation Phases:**
-1. Create BTreePage structure and file management
-2. Implement basic B+ tree operations (insert, search, split)
-3. Build IndexScanOperator following Volcano model
-4. Extend planner with index awareness and cost-based decisions
-5. Add comprehensive benchmarks demonstrating O(n) → O(log n) improvements
+
+**Phase 1: Core Infrastructure (Immediate next steps)**
+1. **Create IndexPage Class** - Type-safe access to raw page buffers, header/entry manipulation methods
+2. **Implement Basic BPlusTreeIndex Class** - File I/O operations, page management, root initialization
+3. **Implement Search Operation** - Tree traversal logic, binary search, key lookup returning table locations
+4. **Create IndexScanOperator** - Volcano-model operator using index for WHERE clause queries
+5. **Extend Planner for Index Awareness** - Choose TableScanOperator vs IndexScanOperator based on available indexes
+
+**Phase 2: Integration & Benchmarking**
+6. **Add Index Creation Infrastructure** - Build indexes from existing table data, catalog integration
+7. **Comprehensive Benchmarking** - Measure and document O(n) → O(log n) performance improvements
+
+**Phase 3: Advanced Features (Future)**
+- Insert operations with index maintenance and page splits
+- Page split/merge algorithms for dynamic tree growth
+- Range query support for BETWEEN operations
+- Index deletion and cleanup operations
+
+**Key Principles:**
+- Incremental development - each step provides working, testable functionality
+- Learning-focused - start with read-only operations before complex modifications
+- Benchmark-driven - demonstrate dramatic performance improvements early
+- Integration-first - get basic indexed SELECT working end-to-end before optimizing
 
 ## Minor Todos:
 1. Update application.log filepath to also use ENV_DATA_DIR.
