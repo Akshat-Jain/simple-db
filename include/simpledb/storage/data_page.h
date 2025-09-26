@@ -2,8 +2,8 @@
 // Created by Akshat Jain on 14/06/25.
 //
 
-#ifndef SIMPLEDB_STORAGE_PAGE_H
-#define SIMPLEDB_STORAGE_PAGE_H
+#ifndef SIMPLEDB_STORAGE_DATA_PAGE_H
+#define SIMPLEDB_STORAGE_DATA_PAGE_H
 
 #include <array>
 #include <cstddef>
@@ -108,4 +108,4 @@ namespace simpledb::storage {
     };
 }  // namespace simpledb::storage
 
-#endif  // SIMPLEDB_STORAGE_PAGE_H
+#endif  // SIMPLEDB_STORAGE_DATA_PAGE_H
