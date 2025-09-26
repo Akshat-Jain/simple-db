@@ -142,7 +142,7 @@ add_executable(simple-db
         src/catalog.cpp
         src/executor.cpp
         src/result.cpp
-        src/storage/page.cpp
+        src/storage/data_page.cpp
         src/storage/table_heap.cpp
         src/serializer.cpp
         src/execution/table_scan_operator.cpp
@@ -175,7 +175,7 @@ target_link_libraries(
 add_executable(run_tests
         tests/parser_test.cpp
         tests/catalog_test.cpp
-        tests/storage/page_test.cpp
+        tests/storage/data_page_test.cpp
         tests/storage/table_heap_test.cpp
         tests/storage/table_heap_iterator_test.cpp
         tests/execution/table_scan_operator_test.cpp
@@ -192,7 +192,7 @@ add_executable(run_tests
         src/executor.cpp
         tests/executor_test.cpp
         src/result.cpp
-        src/storage/page.cpp
+        src/storage/data_page.cpp
         src/storage/table_heap.cpp
         src/serializer.cpp
         src/execution/table_scan_operator.cpp
@@ -236,7 +236,7 @@ add_executable(run_benchmarks
         src/catalog.cpp
         src/executor.cpp
         src/result.cpp
-        src/storage/page.cpp
+        src/storage/data_page.cpp
         src/storage/table_heap.cpp
         src/serializer.cpp
         src/execution/table_scan_operator.cpp

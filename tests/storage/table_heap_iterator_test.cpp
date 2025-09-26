@@ -2,7 +2,7 @@
 // Created by Akshat Jain on 21/06/25.
 //
 
-#include "simpledb/storage/page.h"
+#include "simpledb/storage/data_page.h"
 #include "simpledb/storage/table_heap.h"
 
 #include <filesystem>
@@ -61,8 +61,8 @@ TEST_F(TableHeapIteratorTest, IterateOverMultipleRecordsInSinglePage) {
 TEST_F(TableHeapIteratorTest, IterateOverMultiplePages) {
     simpledb::storage::TableHeap tableHeap(test_file_path);
     const int record_size = 100;  // Size of each record to be added
-    const size_t usable_space = simpledb::storage::PAGE_SIZE - simpledb::storage::Page::HEADER_SIZE;
-    const size_t space_per_record = record_size + sizeof(simpledb::storage::Page::Slot);
+    const size_t usable_space = simpledb::storage::PAGE_SIZE - simpledb::storage::DataPage::HEADER_SIZE;
+    const size_t space_per_record = record_size + sizeof(simpledb::storage::DataPage::Slot);
     const int num_records_to_fill_page = usable_space / space_per_record;
     std::vector<char> record_data(record_size, 'A');
 
@@ -83,17 +83,17 @@ TEST_F(TableHeapIteratorTest, IterateOverMultiplePages) {
 TEST_F(TableHeapIteratorTest, IterateOverTableWithEmptyPageInBetween) {
     std::vector<char> record_data(100, 'A');
 
-    simpledb::storage::Page page0;
+    simpledb::storage::DataPage page0;
     page0.Initialize();
     int num_records_page0 = 5;
     for (int i = 0; i < num_records_page0; ++i) {
         page0.AddRecord(record_data);
     }
 
-    simpledb::storage::Page page1;
+    simpledb::storage::DataPage page1;
     page1.Initialize();  // This page will be empty
 
-    simpledb::storage::Page page2;
+    simpledb::storage::DataPage page2;
     page2.Initialize();
     int num_records_page2 = 3;
     for (int i = 0; i < num_records_page2; ++i) {

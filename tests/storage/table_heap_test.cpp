@@ -2,7 +2,7 @@
 // Created by Akshat Jain on 15/06/25.
 //
 
-#include "simpledb/storage/page.h"
+#include "simpledb/storage/data_page.h"
 #include "simpledb/storage/table_heap.h"
 
 #include <filesystem>
@@ -35,8 +35,8 @@ TEST_F(TableHeapTest, InsertIntoEmptyFile) {
 TEST_F(TableHeapTest, InsertFillsOnePageAndCreatesAnother) {
     simpledb::storage::TableHeap table_heap(test_file_path);
     const int record_size = 100;  // Size of each record to be added
-    const size_t usable_space = simpledb::storage::PAGE_SIZE - simpledb::storage::Page::HEADER_SIZE;
-    const size_t space_per_record = record_size + sizeof(simpledb::storage::Page::Slot);
+    const size_t usable_space = simpledb::storage::PAGE_SIZE - simpledb::storage::DataPage::HEADER_SIZE;
+    const size_t space_per_record = record_size + sizeof(simpledb::storage::DataPage::Slot);
     const int num_records_to_fill_page = usable_space / space_per_record;
 
     std::vector<char> record_data(record_size, 'A');  // Create a record of 100 bytes filled with 'A'

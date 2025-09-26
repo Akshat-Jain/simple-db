@@ -4,7 +4,7 @@
 
 #include "simpledb/executor.h"
 #include "simpledb/catalog.h"
-#include "simpledb/storage/page.h"
+#include "simpledb/storage/data_page.h"
 #include "simpledb/serializer.h"
 #include "simpledb/storage/table_heap.h"
 
@@ -125,7 +125,7 @@ class ExecutorInsertTablesTest : public ExecutorTestBase {
 
         // 2. Seek and read the page
         file.seekg(static_cast<size_t>(page_id) * simpledb::storage::PAGE_SIZE);
-        simpledb::storage::Page page;
+        simpledb::storage::DataPage page;
         file.read(page.GetData(), simpledb::storage::PAGE_SIZE);
         file.close();
 
@@ -339,8 +339,8 @@ TEST_F(ExecutorInsertTablesTest, InsertFillsPageAndSpills) {
     // id "0" is 1 byte. name is 100 bytes. 2 length prefixes (2*2=4 bytes).
     // Total ~ 1 + 100 + 4 = 105 bytes.
     const size_t record_size_estimate = 105;
-    const size_t usable_space = simpledb::storage::PAGE_SIZE - simpledb::storage::Page::HEADER_SIZE;
-    const size_t space_per_record = record_size_estimate + sizeof(simpledb::storage::Page::Slot);
+    const size_t usable_space = simpledb::storage::PAGE_SIZE - simpledb::storage::DataPage::HEADER_SIZE;
+    const size_t space_per_record = record_size_estimate + sizeof(simpledb::storage::DataPage::Slot);
     const int num_records_to_fill_page = usable_space / space_per_record;
     const std::string fixed_name(100, 'A');  // A 100-byte string
 

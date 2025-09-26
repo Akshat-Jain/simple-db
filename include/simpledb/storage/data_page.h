@@ -22,7 +22,7 @@ namespace simpledb::storage {
 
     constexpr size_t PAGE_SIZE = 4096;  // Size of a page in bytes
 
-    class Page {
+    class DataPage {
        public:
         // These constants define the offsets of various fields in the page header.
 
@@ -86,7 +86,7 @@ namespace simpledb::storage {
          * @brief Returns a const pointer to the page's raw data.
          *
          * This version is for read-only access to the page data. It is called
-         * on const Page objects.
+         * on const DataPage objects.
          *
          * @return A const char* pointer to the start of the data array.
          */
@@ -96,7 +96,7 @@ namespace simpledb::storage {
          * @brief Returns a pointer to the page's raw data.
          *
          * This version is for write access to the page data. It is called
-         * on non-const Page objects, allowing the caller to modify the
+         * on non-const DataPage objects, allowing the caller to modify the
          * page's contents (e.g., by reading from a file into the buffer).
          *
          * @return A char* pointer to the start of the data array.

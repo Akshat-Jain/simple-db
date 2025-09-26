@@ -94,10 +94,5 @@ struct LeafEntry {
 4. Extend planner with index awareness and cost-based decisions
 5. Add comprehensive benchmarks demonstrating O(n) → O(log n) improvements
 
-## Other handy things:
-1. `files-to-prompt . | pbcopy`
-2. Older chat: https://aistudio.google.com/prompts/17DRNPhY1QuXOOECcAXZGttiH5vi1Qd8g
-3. Newer chat: https://aistudio.google.com/prompts/1olmlfe1X55D7MrO6T1V4RE8JPyqr4ggu
-
 ## Minor Todos:
 1. Update application.log filepath to also use ENV_DATA_DIR.
