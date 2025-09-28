@@ -8,6 +8,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
 
 namespace simpledb::storage {
     constexpr size_t PAGE_SIZE = 4096;  // Size of a page in bytes
