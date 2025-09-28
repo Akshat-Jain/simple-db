@@ -142,8 +142,9 @@ add_executable(simple-db
         src/catalog.cpp
         src/executor.cpp
         src/result.cpp
-        src/storage/page.cpp
+        src/storage/data_page.cpp
         src/storage/table_heap.cpp
+        src/storage/index_page.cpp
         src/serializer.cpp
         src/execution/table_scan_operator.cpp
         src/execution/projection_operator.cpp
@@ -175,13 +176,14 @@ target_link_libraries(
 add_executable(run_tests
         tests/parser_test.cpp
         tests/catalog_test.cpp
-        tests/storage/page_test.cpp
+        tests/storage/data_page_test.cpp
         tests/storage/table_heap_test.cpp
         tests/storage/table_heap_iterator_test.cpp
         tests/execution/table_scan_operator_test.cpp
         tests/execution/projection_operator_test.cpp
         tests/execution/filter_operator_test.cpp
         tests/select_integration_test.cpp
+        tests/storage/index_page_test.cpp
         # Add other tests/*.cpp files here
 
         # Include source files needed by the tests that aren't part of a library yet
@@ -192,8 +194,9 @@ add_executable(run_tests
         src/executor.cpp
         tests/executor_test.cpp
         src/result.cpp
-        src/storage/page.cpp
+        src/storage/data_page.cpp
         src/storage/table_heap.cpp
+        src/storage/index_page.cpp
         src/serializer.cpp
         src/execution/table_scan_operator.cpp
         src/execution/projection_operator.cpp
@@ -236,8 +239,9 @@ add_executable(run_benchmarks
         src/catalog.cpp
         src/executor.cpp
         src/result.cpp
-        src/storage/page.cpp
+        src/storage/data_page.cpp
         src/storage/table_heap.cpp
+        src/storage/index_page.cpp
         src/serializer.cpp
         src/execution/table_scan_operator.cpp
         src/execution/projection_operator.cpp

@@ -12,7 +12,7 @@
 #include <vector>
 
 #include "simpledb/execution/row.h"
-#include "simpledb/storage/page.h"
+#include "simpledb/storage/data_page.h"
 
 namespace simpledb::storage {
 
@@ -92,18 +92,18 @@ namespace simpledb::storage {
 
        private:
         /**
-         * Reads a specific page from the data file into the provided Page object.
+         * Reads a specific page from the data file into the provided DataPage object.
          * @param page_id The ID of the page to read.
-         * @param page A pointer to a Page object to be populated with data.
+         * @param page A pointer to a DataPage object to be populated with data.
          */
-        void ReadPage(PageId page_id, Page* page);
+        void ReadPage(PageId page_id, DataPage* page);
 
         /**
-         * Writes the data from a Page object to a specific page in the data file.
+         * Writes the data from a DataPage object to a specific page in the data file.
          * @param page_id The ID of the page to write to.
-         * @param page A pointer to the Page object containing the data to write.
+         * @param page A pointer to the DataPage object containing the data to write.
          */
-        void WritePage(PageId page_id, const Page* page);
+        void WritePage(PageId page_id, const DataPage* page);
 
         /**
          * Calculates the number of pages currently in the table file.

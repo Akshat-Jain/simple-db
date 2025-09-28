@@ -37,32 +37,68 @@ What our simplified "No Pager Cache" approach does:
   8. write() the entire modified 4KB page back to disk. 
   9. Close the file.
 
-#### Future todo #2: Indexes
+#### B+ Tree Implementation Plan
 
-An index is a separate data structure that allows for fast lookups. 
-Without an index, the only way to find a specific row is to scan the entire table from beginning to end.
+**Implementation Phases:**
 
-What a real Index (like a B-Tree) does:
-- It's a separate structure (often in its own file) that maps column values to the physical location of the rows.
-- To find the user with id = 123, the database doesn't read the whole table. It searches the B-Tree index for the key 123.
-- The B-Tree search is very fast (logarithmic complexity), quickly leading to a leaf node that says "the row for id 123 is on Page #57 at offset 820".
-- The database then uses the Pager to fetch only Page #57 and reads the record from that specific offset.
+**Phase 1: Core Infrastructure (Immediate next steps)**
+1. **Create IndexPage Class** - Type-safe access to raw page buffers, header/entry manipulation methods
+2. **Implement Basic BPlusTreeIndex Class** - File I/O operations, page management, root initialization
+3. **Implement Search Operation** - Tree traversal logic, binary search, key lookup returning table locations
+4. **Create IndexScanOperator** - Volcano-model operator using index for WHERE clause queries
+5. **Extend Planner for Index Awareness** - Choose TableScanOperator vs IndexScanOperator based on available indexes
 
-What our simplified "No Indexes" approach does:
-- Our TableHeap is just a collection of pages with no specific order.
-- When we eventually implement SELECT * FROM users WHERE id = 123, the logic will be:
-  1. Go to Page #1 of users.data. Read it into memory. 
-  2. Scan every record on that page. Deserialize it and check if its id is 123. 
-  3. Go to Page #2. Read it. Scan every record. 
-  4. ...continue this for every single page in the table file until the record is found or the end of the file is reached.
+**Phase 2: Integration & Benchmarking**
+6. **Add Index Creation Infrastructure** - Build indexes from existing table data, catalog integration
+7. **Comprehensive Benchmarking** - Measure and document O(n) → O(log n) performance improvements
 
-This is called a Full Table Scan. 
-It's very slow for large tables but is simple to implement because you don't need to build or maintain any complex index data structures. You are deferring the entire concept of data structures for fast lookups.
+**Phase 3: Advanced Features (Future)**
+- Insert operations with index maintenance and page splits
+- Page split/merge algorithms for dynamic tree growth
+- Range query support for BETWEEN operations
+- Index deletion and cleanup operations
 
-## Other handy things:
-1. `files-to-prompt . | pbcopy`
-2. Older chat: https://aistudio.google.com/prompts/17DRNPhY1QuXOOECcAXZGttiH5vi1Qd8g
-3. Newer chat: https://aistudio.google.com/prompts/1olmlfe1X55D7MrO6T1V4RE8JPyqr4ggu
+**Key Principles:**
+- Incremental development - each step provides working, testable functionality
+- Learning-focused - start with read-only operations before complex modifications
+- Benchmark-driven - demonstrate dramatic performance improvements early
+- Integration-first - get basic indexed SELECT working end-to-end before optimizing
+
+**File Structure and Organization:**
+
+**New Files Required (12 total):**
+
+**Core B+ Tree Infrastructure (5 files):**
+- `include/simpledb/storage/index_page.h` - Page structure definitions and diagrams (✅ created)
+- `src/storage/index_page.cpp` - IndexPage class methods implementation
+- `include/simpledb/storage/btree_index.h` - Main B+ tree index interface
+- `src/storage/btree_index.cpp` - Search, insert, page splits, file I/O operations
+- `include/simpledb/execution/index_scan_operator.h` - Volcano-model indexed table access operator
+- `src/execution/index_scan_operator.cpp` - Indexed row iteration and filtering implementation
+
+**Integration & Management (4 files):**
+- Instead of the index_catalog.h/cpp files, we can extend the existing catalog.h/cpp to track index information
+  - `include/simpledb/catalog/index_catalog.h` - Track which tables have indexes, metadata management
+  - `src/catalog/index_catalog.cpp` - Index registration, lookup, and persistence
+- `include/simpledb/storage/index_manager.h` - High-level index operations (create, drop, maintain)
+- `src/storage/index_manager.cpp` - Index lifecycle management implementation
+
+**Testing (4 files):**
+- `tests/storage/index_page_test.cpp` - Unit tests for IndexPage functionality
+- `tests/storage/btree_index_test.cpp` - Unit tests for B+ tree operations
+- `tests/execution/index_scan_operator_test.cpp` - Unit tests for indexed query execution
+- `tests/btree_integration_test.cpp` - End-to-end integration tests
+
+**Benchmarking (1 file):**
+- `benchmarks/index_performance.cpp` - Performance comparison benchmarks
+
+**Files to Modify:**
+- `planner.cpp` - Add IndexScanOperator selection logic
+- `catalog.cpp` - Extend for index information tracking
+- `executor.cpp` - Handle CREATE/DROP INDEX commands
+- Grammar files - If adding CREATE INDEX SQL syntax
+
+**Implementation Priority:** Start with core infrastructure (IndexPage + BPlusTreeIndex) for basic search, then add operator integration and planner logic for end-to-end indexed queries.
 
 ## Minor Todos:
 1. Update application.log filepath to also use ENV_DATA_DIR.

@@ -77,8 +77,8 @@ TEST_F(TableScanOperatorTest, ScanSingleRowTable) {
 
 TEST_F(TableScanOperatorTest, ScanMultiPageTable) {
     const int record_size = 100;  // Size of each record to be added
-    const size_t usable_space = simpledb::storage::PAGE_SIZE - simpledb::storage::Page::HEADER_SIZE;
-    const size_t space_per_record = record_size + sizeof(simpledb::storage::Page::Slot);
+    const size_t usable_space = simpledb::storage::PAGE_SIZE - simpledb::storage::DataPage::HEADER_SIZE;
+    const size_t space_per_record = record_size + sizeof(simpledb::storage::DataPage::Slot);
     const int num_records_to_fill_page = usable_space / space_per_record;
     std::string record_data(record_size, 'A');
 

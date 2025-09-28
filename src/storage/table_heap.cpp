@@ -2,7 +2,7 @@
 // Created by Akshat Jain on 14/06/25.
 //
 
-#include "simpledb/storage/page.h"
+#include "simpledb/storage/data_page.h"
 #include "simpledb/storage/table_heap.h"
 #include "simpledb/utils/logging.h"
 
@@ -22,7 +22,7 @@ namespace simpledb::storage {
                 return std::nullopt;
             }
 
-            Page page;
+            DataPage page;
             parent_heap_->ReadPage(current_page_id_, &page);
 
             if (current_slot_num_ >= page.GetNumRecords()) {
@@ -69,7 +69,7 @@ namespace simpledb::storage {
         uint32_t num_pages = GetNumPages();
         if (num_pages > 0) {
             uint32_t last_page_id = num_pages - 1;
-            Page last_page;
+            DataPage last_page;
             ReadPage(last_page_id, &last_page);
             if (last_page.AddRecord(record_data)) {
                 WritePage(last_page_id, &last_page);
@@ -78,7 +78,7 @@ namespace simpledb::storage {
         }
 
         logging::log.info("Need to allocate a new page for the record.");
-        Page new_page;
+        DataPage new_page;
         new_page.Initialize();
         if (!new_page.AddRecord(record_data)) {
             logging::log.error("Failed to add record to the new page. Record size may be too large: {} bytes.",
@@ -89,13 +89,13 @@ namespace simpledb::storage {
         return true;
     }
 
-    void TableHeap::ReadPage(PageId page_id, Page* page) {
+    void TableHeap::ReadPage(PageId page_id, DataPage* page) {
         if (!file_stream_.is_open()) {
             throw std::runtime_error("File stream is not open for reading.");
         }
 
         if (page_id >= GetNumPages()) {
-            throw std::out_of_range("Page ID " + std::to_string(page_id) + " is out of range.");
+            throw std::out_of_range("DataPage ID " + std::to_string(page_id) + " is out of range.");
         }
 
         // Calculate the offset for the page we want to read.
@@ -107,7 +107,7 @@ namespace simpledb::storage {
             throw std::runtime_error("Failed to seek to page " + std::to_string(page_id));
         }
 
-        // Read the page data into the provided Page object.
+        // Read the page data into the provided DataPage object.
         file_stream_.read(page->GetData(), PAGE_SIZE);
         if (file_stream_.fail()) {
             throw std::runtime_error("Failed to read page " + std::to_string(page_id));
@@ -115,14 +115,14 @@ namespace simpledb::storage {
         file_stream_.seekg(0);
     }
 
-    void TableHeap::WritePage(PageId page_id, const Page* page) {
+    void TableHeap::WritePage(PageId page_id, const DataPage* page) {
         if (!file_stream_.is_open()) {
             throw std::runtime_error("File stream is not open for writing.");
         }
 
         uint32_t num_pages = GetNumPages();
         if (page_id > num_pages) {
-            throw std::out_of_range("Page ID " + std::to_string(page_id) + " is out of range.");
+            throw std::out_of_range("DataPage ID " + std::to_string(page_id) + " is out of range.");
         } else if (page_id == num_pages) {
             // If the page_id is equal to the number of pages, we are appending a new page.
             logging::log.info("Appending new page with ID {}.", page_id);
@@ -137,7 +137,7 @@ namespace simpledb::storage {
             throw std::runtime_error("Failed to seek to page " + std::to_string(page_id));
         }
 
-        // Write the page data from the provided Page object.
+        // Write the page data from the provided DataPage object.
         file_stream_.write(page->GetData(), PAGE_SIZE);
         if (file_stream_.fail()) {
             throw std::runtime_error("Failed to write page " + std::to_string(page_id));

@@ -2,22 +2,22 @@
 // Created by Akshat Jain on 14/06/25.
 //
 
-#include "simpledb/storage/page.h"
+#include "simpledb/storage/data_page.h"
 
 #include <gtest/gtest.h>
 
 TEST(PageTest, Initialization) {
-    simpledb::storage::Page page;
+    simpledb::storage::DataPage page;
     page.Initialize();
 
     ASSERT_EQ(page.GetVersion(), 1);
     ASSERT_EQ(page.GetNumRecords(), 0);
     ASSERT_EQ(page.GetFreeSpacePointer(), simpledb::storage::PAGE_SIZE);
-    ASSERT_EQ(page.GetFreeSpace(), simpledb::storage::PAGE_SIZE - simpledb::storage::Page::HEADER_SIZE);
+    ASSERT_EQ(page.GetFreeSpace(), simpledb::storage::PAGE_SIZE - simpledb::storage::DataPage::HEADER_SIZE);
 }
 
 TEST(PageTest, AddOneRecord) {
-    simpledb::storage::Page page;
+    simpledb::storage::DataPage page;
     page.Initialize();
 
     size_t record_size = 100;                         // Size of the record to be added
@@ -31,14 +31,14 @@ TEST(PageTest, AddOneRecord) {
     ASSERT_EQ(slot.record_length, record_size);
 
     ASSERT_EQ(page.GetFreeSpace(),
-              simpledb::storage::PAGE_SIZE - simpledb::storage::Page::HEADER_SIZE - record_size -
-                  sizeof(simpledb::storage::Page::Slot));
+              simpledb::storage::PAGE_SIZE - simpledb::storage::DataPage::HEADER_SIZE - record_size -
+                  sizeof(simpledb::storage::DataPage::Slot));
 
     ASSERT_EQ(record_data, page.GetRecord(slot));
 }
 
 TEST(PageTest, AddMultipleRecords) {
-    simpledb::storage::Page page;
+    simpledb::storage::DataPage page;
     page.Initialize();
 
     size_t record_size = 50;                          // Size of each record to be added
@@ -58,16 +58,16 @@ TEST(PageTest, AddMultipleRecords) {
     }
 
     ASSERT_EQ(page.GetFreeSpace(),
-              simpledb::storage::PAGE_SIZE - simpledb::storage::Page::HEADER_SIZE - 5 * record_size -
-                  5 * sizeof(simpledb::storage::Page::Slot));
+              simpledb::storage::PAGE_SIZE - simpledb::storage::DataPage::HEADER_SIZE - 5 * record_size -
+                  5 * sizeof(simpledb::storage::DataPage::Slot));
 }
 
 TEST(PageTest, AddRecordExceedingFreeSpace) {
-    simpledb::storage::Page page;
+    simpledb::storage::DataPage page;
     page.Initialize();
 
-    size_t record_size =
-        simpledb::storage::PAGE_SIZE - simpledb::storage::Page::HEADER_SIZE - sizeof(simpledb::storage::Page::Slot) + 1;
+    size_t record_size = simpledb::storage::PAGE_SIZE - simpledb::storage::DataPage::HEADER_SIZE -
+                         sizeof(simpledb::storage::DataPage::Slot) + 1;
     std::vector<char> record_data(record_size, 'A');  // Create a record that exceeds the free space
 
     ASSERT_FALSE(page.AddRecord(record_data));  // Should fail to add the record
