@@ -144,6 +144,7 @@ add_executable(simple-db
         src/result.cpp
         src/storage/data_page.cpp
         src/storage/table_heap.cpp
+        src/storage/index_page.cpp
         src/serializer.cpp
         src/execution/table_scan_operator.cpp
         src/execution/projection_operator.cpp
@@ -182,6 +183,7 @@ add_executable(run_tests
         tests/execution/projection_operator_test.cpp
         tests/execution/filter_operator_test.cpp
         tests/select_integration_test.cpp
+        tests/storage/index_page_test.cpp
         # Add other tests/*.cpp files here
 
         # Include source files needed by the tests that aren't part of a library yet
@@ -194,6 +196,7 @@ add_executable(run_tests
         src/result.cpp
         src/storage/data_page.cpp
         src/storage/table_heap.cpp
+        src/storage/index_page.cpp
         src/serializer.cpp
         src/execution/table_scan_operator.cpp
         src/execution/projection_operator.cpp
@@ -238,6 +241,7 @@ add_executable(run_benchmarks
         src/result.cpp
         src/storage/data_page.cpp
         src/storage/table_heap.cpp
+        src/storage/index_page.cpp
         src/serializer.cpp
         src/execution/table_scan_operator.cpp
         src/execution/projection_operator.cpp

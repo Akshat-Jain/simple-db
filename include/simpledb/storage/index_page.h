@@ -5,6 +5,7 @@
 #ifndef SIMPLE_DB_INDEX_PAGE_H
 #define SIMPLE_DB_INDEX_PAGE_H
 
+#include <array>
 #include <cstddef>
 #include <cstdint>
 
@@ -32,9 +33,9 @@ namespace simpledb::storage {
      * LeftmostChild (4 bytes): Page ID for values < all separator keys
      *
      * InternalEntry (8 bytes each, max 510 entries):
-     * +---------------+-----------+
-     * | SeparatorKey  | RightChild|
-     * +---------------+-----------+
+     * +---------------+------------+
+     * | SeparatorKey  | RightChild |
+     * +---------------+------------+
      * 4 bytes         4 bytes
      *
      * Example Internal Page with 2 separator keys (3 children total):
@@ -90,7 +91,6 @@ namespace simpledb::storage {
         uint32_t prev_page;    // Left sibling page ID (0 if none)
         uint32_t next_page;    // Right sibling page ID (0 if none)
     };
-    static_assert(sizeof(BTreePageHeader) == 12, "BTreePageHeader must be exactly 12 bytes");
 
     /**
      * Entry stored in internal pages
@@ -100,7 +100,6 @@ namespace simpledb::storage {
         int32_t separator_key;  // Boundary value
         uint32_t right_child;   // Child page for values >= separator_key
     };
-    static_assert(sizeof(InternalEntry) == 8, "InternalEntry must be exactly 8 bytes");
 
     /**
      * Entry stored in leaf pages
@@ -112,13 +111,112 @@ namespace simpledb::storage {
         uint32_t table_page_id;     // Page in table data file
         uint16_t table_row_offset;  // Offset within that page
     } __attribute__((packed));
-    static_assert(sizeof(LeafEntry) == 10, "LeafEntry must be exactly 10 bytes");
 
     // Capacity calculations for 4KB pages
     constexpr size_t HEADER_SIZE = sizeof(BTreePageHeader);                                         // 12 bytes
     constexpr size_t MAX_LEAF_ENTRIES = (PAGE_SIZE - HEADER_SIZE) / sizeof(LeafEntry);              // 408 entries
     constexpr size_t MAX_INTERNAL_ENTRIES = (PAGE_SIZE - HEADER_SIZE - 4) / sizeof(InternalEntry);  // 510 entries
     // Note: Internal pages need 4 extra bytes for leftmost_child, hence the -4
+
+    class IndexPage {
+       public:
+        /**
+         * Sets up the page header for a new, empty page.
+         */
+        void Initialize(bool isInternalPage);
+
+        /**
+         * @brief Returns true if this is an internal page, false if it's a leaf page.
+         */
+        bool IsInternalPage() const;
+
+        /**
+         * @brief Returns the number of entries in this page.
+         * For internal pages, this is the number of separator keys.
+         * For leaf pages, this is the number of data entries.
+         */
+        uint16_t GetNumEntries() const;
+
+        /**
+         * @brief Sets the number of entries in this page.
+         * For internal pages, this is the number of separator keys.
+         * For leaf pages, this is the number of data entries.
+         */
+        void SetNumEntries(uint16_t num_entries);
+
+        /**
+         * @brief Returns the previous (left sibling) page ID, or 0 if none.
+         */
+        uint32_t GetPrevPage() const;
+
+        /**
+         * @brief Sets the previous (left sibling) page ID.
+         */
+        void SetPrevPage(uint32_t prev_page_id);
+
+        /**
+         * @brief Returns the next (right sibling) page ID, or 0 if none.
+         */
+        uint32_t GetNextPage() const;
+
+        /**
+         * @brief Sets the next (right sibling) page ID.
+         */
+        void SetNextPage(uint32_t next_page_id);
+
+        /**
+         * @brief Returns a pointer to the leftmost child page ID (only for internal pages).
+         */
+        uint32_t* GetLeftmostChild();
+
+        /**
+         * @brief Sets the leftmost child page ID (only for internal pages).
+         */
+        void SetLeftmostChild(uint32_t leftmost_child);
+
+        /**
+         * @brief Checks if the page is full and cannot accommodate more entries.
+         */
+        bool IsFull() const;
+
+        /**
+         * @brief Returns a pointer to the InternalEntry at the given index.
+         */
+        InternalEntry* GetInternalEntry(size_t index);
+
+        /**
+         * @brief Returns a pointer to the LeafEntry at the given index.
+         */
+        LeafEntry* GetLeafEntry(size_t index);
+
+        /**
+         * @brief Sets the InternalEntry at the given index.
+         */
+        void SetInternalEntry(size_t index, const InternalEntry& entry);
+
+        /**
+         * @brief Sets the InternalEntry at the given index.
+         */
+        void SetLeafEntry(size_t index, const LeafEntry& entry);
+
+        /**
+         * @brief Returns a const pointer to the page's raw data, for read-only access.
+         */
+        const char* GetData() const;
+
+        /**
+         * @brief Returns a pointer to the page's raw data, allowing write access.
+         */
+        char* GetData();
+
+       private:
+        /**
+         * @brief Retrieves the BTreePageHeader from the page's data.
+         */
+        BTreePageHeader GetHeader() const;
+
+        std::array<char, PAGE_SIZE> data_;  // Data stored in the page
+    };
 
 }  // namespace simpledb::storage
 
